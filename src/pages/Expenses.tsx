@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Filter, Plus, Search, Trash2, Users } from 'lucide-react'
+import { Filter, Pencil, Plus, Search, Trash2, Users } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import { formatINR, prettyDate } from '../lib/format'
 import { Modal } from '../components/Modal'
 import { ExpenseForm } from '../components/ExpenseForm'
+import type { Expense } from '../lib/types'
 
 export function ExpensesPage() {
   const { expenses, members, categories, removeExpense, clearAllExpenses } =
@@ -12,6 +13,7 @@ export function ExpensesPage() {
   const [categoryId, setCategoryId] = useState<string>('All')
   const [memberId, setMemberId] = useState<string>('All')
   const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<Expense | null>(null)
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -166,14 +168,24 @@ export function ExpensesPage() {
                     <div className="font-semibold tabular-nums">
                       {formatINR(e.amount)}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeExpense(e.id)}
-                      className="mt-1 text-xs text-neutral-400 hover:text-rose-600 dark:hover:text-rose-400"
-                      aria-label="Delete expense"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="mt-1 flex items-center justify-end gap-2 text-neutral-400">
+                      <button
+                        type="button"
+                        onClick={() => setEditing(e)}
+                        className="hover:text-indigo-600 dark:hover:text-indigo-400"
+                        aria-label="Edit expense"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeExpense(e.id)}
+                        className="hover:text-rose-600 dark:hover:text-rose-400"
+                        aria-label="Delete expense"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </li>
               )
@@ -192,6 +204,21 @@ export function ExpensesPage() {
           onSubmitted={() => setOpen(false)}
           onCancel={() => setOpen(false)}
         />
+      </Modal>
+
+      <Modal
+        open={editing !== null}
+        onClose={() => setEditing(null)}
+        title="Edit expense"
+        description="Update amount, who paid, or how it splits."
+      >
+        {editing && (
+          <ExpenseForm
+            initial={editing}
+            onSubmitted={() => setEditing(null)}
+            onCancel={() => setEditing(null)}
+          />
+        )}
       </Modal>
     </div>
   )

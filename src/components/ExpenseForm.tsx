@@ -1,23 +1,36 @@
 import { useEffect, useMemo, useState } from 'react'
+import { UserPlus } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import { formatINR, todayISO } from '../lib/format'
+import type { Expense } from '../lib/types'
 
 type Props = {
+  initial?: Expense
   onSubmitted: () => void
   onCancel: () => void
 }
 
-export function ExpenseForm({ onSubmitted, onCancel }: Props) {
-  const { members, categories, addExpense } = useData()
-  const [description, setDescription] = useState('')
-  const [amount, setAmount] = useState('')
-  const [date, setDate] = useState(() => todayISO())
-  const [categoryId, setCategoryId] = useState(() => categories[0]?.id ?? '')
-  const [paidBy, setPaidBy] = useState(() => members[0]?.id ?? '')
+export function ExpenseForm({ initial, onSubmitted, onCancel }: Props) {
+  const { members, categories, addExpense, updateExpense, addMember } =
+    useData()
+  const isEdit = Boolean(initial)
+
+  const [description, setDescription] = useState(initial?.description ?? '')
+  const [amount, setAmount] = useState(initial ? String(initial.amount) : '')
+  const [date, setDate] = useState(() => initial?.date ?? todayISO())
+  const [categoryId, setCategoryId] = useState(
+    () => initial?.categoryId ?? categories[0]?.id ?? '',
+  )
+  const [paidBy, setPaidBy] = useState(
+    () => initial?.paidBy ?? members[0]?.id ?? '',
+  )
   const [splitAmong, setSplitAmong] = useState<string[]>(() =>
-    members.map((m) => m.id),
+    initial ? [...initial.splitAmong] : members.map((m) => m.id),
   )
   const [error, setError] = useState<string | null>(null)
+  const [showAddMember, setShowAddMember] = useState(false)
+  const [newMemberName, setNewMemberName] = useState('')
+  const [memberError, setMemberError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!categories.some((c) => c.id === categoryId)) {
@@ -29,7 +42,9 @@ export function ExpenseForm({ onSubmitted, onCancel }: Props) {
     if (!members.some((m) => m.id === paidBy)) {
       setPaidBy(members[0]?.id ?? '')
     }
-    setSplitAmong((prev) => prev.filter((id) => members.some((m) => m.id === id)))
+    setSplitAmong((prev) =>
+      prev.filter((id) => members.some((m) => m.id === id)),
+    )
   }, [members, paidBy])
 
   const numericAmount = parseFloat(amount)
@@ -45,14 +60,22 @@ export function ExpenseForm({ onSubmitted, onCancel }: Props) {
     )
   }
 
+  const handleAddMember = () => {
+    const added = addMember(newMemberName)
+    if (!added) {
+      setMemberError('Enter a unique name.')
+      return
+    }
+    setSplitAmong((prev) => [...prev, added.id])
+    setNewMemberName('')
+    setMemberError(null)
+    setShowAddMember(false)
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (members.length === 0) {
       setError('Add a member first.')
-      return
-    }
-    if (!description.trim()) {
-      setError('Description is required.')
       return
     }
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
@@ -71,14 +94,19 @@ export function ExpenseForm({ onSubmitted, onCancel }: Props) {
       setError('Pick a category.')
       return
     }
-    addExpense({
+    const payload = {
       amount: Math.round(numericAmount * 100) / 100,
       description: description.trim(),
       categoryId,
       date,
       paidBy,
       splitAmong: [...splitAmong],
-    })
+    }
+    if (isEdit && initial) {
+      updateExpense(initial.id, payload)
+    } else {
+      addExpense(payload)
+    }
     onSubmitted()
   }
 
@@ -105,9 +133,14 @@ export function ExpenseForm({ onSubmitted, onCancel }: Props) {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
-          <label className="mb-1 block text-xs font-medium text-neutral-600 dark:text-neutral-400">
-            Description
-          </label>
+          <div className="mb-1 flex items-baseline justify-between">
+            <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
+              Description
+            </label>
+            <span className="text-[11px] text-neutral-400 dark:text-neutral-500">
+              optional
+            </span>
+          </div>
           <input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -172,9 +205,21 @@ export function ExpenseForm({ onSubmitted, onCancel }: Props) {
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-neutral-600 dark:text-neutral-400">
-          Split among
-        </label>
+        <div className="mb-1 flex items-center justify-between">
+          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
+            Split among
+          </label>
+          {!showAddMember && (
+            <button
+              type="button"
+              onClick={() => setShowAddMember(true)}
+              className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              New member
+            </button>
+          )}
+        </div>
         <div className="flex flex-wrap gap-2">
           {members.map((m) => {
             const checked = splitAmong.includes(m.id)
@@ -198,6 +243,46 @@ export function ExpenseForm({ onSubmitted, onCancel }: Props) {
             )
           })}
         </div>
+        {showAddMember && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input
+              value={newMemberName}
+              onChange={(e) => setNewMemberName(e.target.value)}
+              autoFocus
+              placeholder="New member name"
+              className="flex-1 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleAddMember()
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleAddMember}
+              className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500"
+            >
+              Add
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowAddMember(false)
+                setNewMemberName('')
+                setMemberError(null)
+              }}
+              className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+            >
+              Cancel
+            </button>
+            {memberError && (
+              <span className="w-full text-xs text-rose-600 dark:text-rose-400">
+                {memberError}
+              </span>
+            )}
+          </div>
+        )}
         {perShare !== null && (
           <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
             Each pays <span className="font-medium">{formatINR(perShare)}</span>
@@ -224,7 +309,7 @@ export function ExpenseForm({ onSubmitted, onCancel }: Props) {
           type="submit"
           className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
         >
-          Save expense
+          {isEdit ? 'Save changes' : 'Save expense'}
         </button>
       </div>
     </form>

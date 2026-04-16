@@ -28,6 +28,7 @@ type DataContextValue = {
   renameCategory: (id: string, name: string, color: string) => void
   removeCategory: (id: string) => void
   addExpense: (e: Omit<Expense, 'id'>) => void
+  updateExpense: (id: string, patch: Omit<Expense, 'id'>) => void
   removeExpense: (id: string) => void
   clearAllExpenses: () => void
 }
@@ -149,6 +150,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setExpenses((prev) => [next, ...prev])
   }, [])
 
+  const updateExpense = useCallback(
+    (id: string, patch: Omit<Expense, 'id'>) => {
+      setExpenses((prev) =>
+        prev.map((e) => (e.id === id ? { ...patch, id } : e)),
+      )
+    },
+    [],
+  )
+
   const removeExpense = useCallback((id: string) => {
     setExpenses((prev) => prev.filter((e) => e.id !== id))
   }, [])
@@ -169,6 +179,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       renameCategory,
       removeCategory,
       addExpense,
+      updateExpense,
       removeExpense,
       clearAllExpenses,
     }),
@@ -183,6 +194,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       renameCategory,
       removeCategory,
       addExpense,
+      updateExpense,
       removeExpense,
       clearAllExpenses,
     ],
