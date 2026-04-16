@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Check, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Check, ChevronRight, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import { formatINR } from '../lib/format'
 import { Modal } from '../components/Modal'
+import { MemberDetailsModal } from '../components/MemberDetailsModal'
+import type { Member } from '../lib/types'
 
 export function MembersPage() {
   const { members, expenses, addMember, renameMember, removeMember } = useData()
@@ -11,6 +13,7 @@ export function MembersPage() {
   const [error, setError] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
+  const [detailMember, setDetailMember] = useState<Member | null>(null)
 
   const stats = useMemo(() => {
     const paid = new Map<string, number>()
@@ -110,11 +113,32 @@ export function MembersPage() {
                 key={s.member.id}
                 className="flex flex-wrap items-center gap-4 px-5 py-3"
               >
-                <div className="flex flex-1 items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isEditing) setDetailMember(s.member)
+                  }}
+                  className="flex flex-1 items-center gap-3 text-left hover:opacity-80"
+                  aria-label={`Open details for ${s.member.name}`}
+                >
                   <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-neutral-200 text-sm font-semibold text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
                     {initial}
                   </span>
                   {isEditing ? (
+                    <></>
+                  ) : (
+                    <div>
+                      <div className="flex items-center gap-1 font-medium">
+                        {s.member.name}
+                        <ChevronRight className="h-4 w-4 text-neutral-400" />
+                      </div>
+                      <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                        {s.count} {s.count === 1 ? 'expense' : 'expenses'} · view breakdown
+                      </div>
+                    </div>
+                  )}
+                </button>
+                {isEditing && (
                     <div className="flex items-center gap-2">
                       <input
                         value={editingName}
@@ -142,15 +166,7 @@ export function MembersPage() {
                         <X className="h-4 w-4" />
                       </button>
                     </div>
-                  ) : (
-                    <div>
-                      <div className="font-medium">{s.member.name}</div>
-                      <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                        {s.count} {s.count === 1 ? 'expense' : 'expenses'}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                )}
                 <div className="grid grid-cols-2 gap-4 text-right text-sm tabular-nums sm:grid-cols-4 sm:gap-6">
                   <div>
                     <div className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
@@ -224,6 +240,11 @@ export function MembersPage() {
           })}
         </ul>
       </div>
+
+      <MemberDetailsModal
+        member={detailMember}
+        onClose={() => setDetailMember(null)}
+      />
 
       <Modal
         open={open}

@@ -1,5 +1,5 @@
-import { Check, CircleDot } from 'lucide-react'
 import { Modal } from './Modal'
+import { StatusSelect } from './StatusSelect'
 import { useData } from '../context/DataContext'
 import { formatINR, prettyDate } from '../lib/format'
 import type { Expense } from '../lib/types'
@@ -98,31 +98,14 @@ export function SettleModal({ expense, onClose }: Props) {
                       Owes {formatINR(perShare)}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => togglePaid(expense.id, id)}
+                  <StatusSelect
+                    value={isPaid ? 'paid' : 'pending'}
                     disabled={isPayer}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition ${
-                      isPayer
-                        ? 'cursor-not-allowed bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-500'
-                        : isPaid
-                          ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                          : 'border border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20'
-                    }`}
-                    aria-label={isPaid ? 'Mark pending' : 'Mark paid'}
-                  >
-                    {isPaid ? (
-                      <>
-                        <Check className="h-3.5 w-3.5" />
-                        Paid
-                      </>
-                    ) : (
-                      <>
-                        <CircleDot className="h-3.5 w-3.5" />
-                        Pending
-                      </>
-                    )}
-                  </button>
+                    onChange={(next) => {
+                      const nowPaid = next === 'paid'
+                      if (nowPaid !== isPaid) togglePaid(expense.id, id)
+                    }}
+                  />
                 </li>
               )
             })}
