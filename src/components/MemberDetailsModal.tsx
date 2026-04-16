@@ -3,6 +3,7 @@ import { Modal } from './Modal'
 import { StatusSelect } from './StatusSelect'
 import { useData } from '../context/DataContext'
 import { formatINR, prettyDate } from '../lib/format'
+import { perShareFor } from '../lib/settlement'
 import type { Expense, Member } from '../lib/types'
 
 type Props = {
@@ -34,14 +35,13 @@ export function MemberDetailsModal({ member, onClose }: Props) {
         members.some((m) => m.id === id),
       )
       if (valid.length === 0) continue
-      const per = e.amount / valid.length
 
       // Money THIS member has to pay to others (show even if already paid)
       if (valid.includes(member.id) && e.paidBy !== member.id) {
         owesList.push({
           expense: e,
           counterpart: nameOf(e.paidBy),
-          share: per,
+          share: perShareFor(e, member.id),
           paid: e.settledBy.includes(member.id),
           splitterId: member.id,
         })
@@ -54,7 +54,7 @@ export function MemberDetailsModal({ member, onClose }: Props) {
           owedList.push({
             expense: e,
             counterpart: nameOf(sid),
-            share: per,
+            share: perShareFor(e, sid),
             paid: e.settledBy.includes(sid),
             splitterId: sid,
           })

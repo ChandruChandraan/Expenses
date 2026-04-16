@@ -64,13 +64,15 @@ export function loadTheme(): ThemeMode {
   const stored =
     localStorage.getItem(KEYS.theme) ?? localStorage.getItem(KEYS.legacyV3Theme)
   if (stored === 'dark' || stored === 'light') return stored
+  // Default to dark on first load. Respect `prefers-color-scheme: light`
+  // only when the OS explicitly prefers light.
   if (
     typeof window !== 'undefined' &&
-    window.matchMedia?.('(prefers-color-scheme: dark)').matches
+    window.matchMedia?.('(prefers-color-scheme: light)').matches
   ) {
-    return 'dark'
+    return 'light'
   }
-  return 'light'
+  return 'dark'
 }
 
 export function saveTheme(mode: ThemeMode): void {

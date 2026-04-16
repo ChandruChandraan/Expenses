@@ -2,6 +2,7 @@ import { Modal } from './Modal'
 import { StatusSelect } from './StatusSelect'
 import { useData } from '../context/DataContext'
 import { formatINR, prettyDate } from '../lib/format'
+import { isCustomSplit, perShareFor } from '../lib/settlement'
 import type { Expense } from '../lib/types'
 
 type Props = {
@@ -19,14 +20,15 @@ export function SettleModal({ expense, onClose }: Props) {
   const category = expense
     ? categories.find((c) => c.id === expense.categoryId)
     : null
-  const perShare =
-    expense && expense.splitAmong.length > 0
-      ? expense.amount / expense.splitAmong.length
-      : 0
+  const custom = expense ? isCustomSplit(expense) : false
   const paidCount = expense?.settledBy.length ?? 0
   const totalCount = expense?.splitAmong.length ?? 0
   const pendingAmount = expense
-    ? perShare * (totalCount - paidCount)
+    ? expense.splitAmong.reduce(
+        (sum, id) =>
+          sum + (expense.settledBy.includes(id) ? 0 : perShareFor(expense, id)),
+        0,
+      )
     : 0
   const allSettled =
     expense != null && paidCount === totalCount && totalCount > 0
@@ -55,10 +57,14 @@ export function SettleModal({ expense, onClose }: Props) {
             </div>
             <div className="mt-2 flex items-center justify-between text-sm">
               <span>
-                Each share:{' '}
-                <span className="font-semibold tabular-nums">
-                  {formatINR(perShare)}
-                </span>
+                {custom
+                  ? 'Custom split'
+                  : 'Each share:'}{' '}
+                {!custom && (
+                  <span className="font-semibold tabular-nums">
+                    {formatINR(perShareFor(expense, expense.splitAmong[0]))}
+                  </span>
+                )}
               </span>
               <span
                 className={
@@ -80,6 +86,7 @@ export function SettleModal({ expense, onClose }: Props) {
               const member = members.find((m) => m.id === id)
               const isPayer = id === expense.paidBy
               const isPaid = expense.settledBy.includes(id)
+              const share = perShareFor(expense, id)
               return (
                 <li
                   key={id}
@@ -95,7 +102,7 @@ export function SettleModal({ expense, onClose }: Props) {
                       )}
                     </div>
                     <div className="text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
-                      Owes {formatINR(perShare)}
+                      Owes {formatINR(share)}
                     </div>
                   </div>
                   <StatusSelect

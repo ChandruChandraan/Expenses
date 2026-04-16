@@ -3,6 +3,7 @@ import { Modal } from './Modal'
 import { StatusSelect } from './StatusSelect'
 import { useData } from '../context/DataContext'
 import { formatINR, prettyDate } from '../lib/format'
+import { isCustomSplit, perShareFor } from '../lib/settlement'
 
 type Filter = 'pending' | 'settled'
 
@@ -22,22 +23,26 @@ export function SettlementDetailsModal({ open, filter, onClose }: Props) {
 
     return expenses
       .map((e) => {
-        const per = e.splitAmong.length > 0 ? e.amount / e.splitAmong.length : 0
         const splitters = e.splitAmong.map((sid) => ({
           id: sid,
           name: memberName(sid),
           paid: e.settledBy.includes(sid),
+          share: perShareFor(e, sid),
           valid: members.some((m) => m.id === sid),
         }))
         const pendingCount = splitters.filter((s) => !s.paid).length
         const paidCount = splitters.filter((s) => s.paid).length
-        const pendingAmount = pendingCount * per
-        const settledAmount = paidCount * per
+        const pendingAmount = splitters
+          .filter((s) => !s.paid)
+          .reduce((s, r) => s + r.share, 0)
+        const settledAmount = splitters
+          .filter((s) => s.paid)
+          .reduce((s, r) => s + r.share, 0)
         return {
           expense: e,
           cat: catById.get(e.categoryId),
           payer: memberName(e.paidBy),
-          per,
+          custom: isCustomSplit(e),
           splitters,
           pendingCount,
           paidCount,
@@ -107,7 +112,10 @@ export function SettlementDetailsModal({ open, filter, onClose }: Props) {
                   <div className="truncate text-xs text-neutral-500 dark:text-neutral-400">
                     {r.cat?.name ?? 'Uncategorized'} ·{' '}
                     {prettyDate(r.expense.date)} · paid by {r.payer} ·{' '}
-                    {formatINR(r.per)} each ·{' '}
+                    {r.custom
+                      ? 'custom split'
+                      : `${formatINR(r.splitters[0]?.share ?? 0)} each`}
+                    {' · '}
                     <span
                       className={
                         r.pendingCount > 0
@@ -129,6 +137,9 @@ export function SettlementDetailsModal({ open, filter, onClose }: Props) {
                       className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-900"
                     >
                       <span className="font-medium">{s.name}</span>
+                      <span className="tabular-nums text-neutral-500 dark:text-neutral-400">
+                        {formatINR(s.share)}
+                      </span>
                       <StatusSelect
                         value={s.paid ? 'paid' : 'pending'}
                         disabled={isPayer}

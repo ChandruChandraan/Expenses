@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Check, ChevronRight, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import { formatINR } from '../lib/format'
+import { perShareFor } from '../lib/settlement'
 import { Modal } from '../components/Modal'
 import { MemberDetailsModal } from '../components/MemberDetailsModal'
 import type { Member } from '../lib/types'
@@ -31,14 +32,12 @@ export function MembersPage() {
         paid.set(e.paidBy, (paid.get(e.paidBy) ?? 0) + e.amount)
       }
       const valid = e.splitAmong.filter((id) => share.has(id))
-      if (valid.length > 0) {
-        const per = e.amount / valid.length
-        for (const id of valid) {
-          share.set(id, (share.get(id) ?? 0) + per)
-          count.set(id, (count.get(id) ?? 0) + 1)
-          if (!e.settledBy.includes(id)) {
-            pending.set(id, (pending.get(id) ?? 0) + per)
-          }
+      for (const id of valid) {
+        const per = perShareFor(e, id)
+        share.set(id, (share.get(id) ?? 0) + per)
+        count.set(id, (count.get(id) ?? 0) + 1)
+        if (!e.settledBy.includes(id)) {
+          pending.set(id, (pending.get(id) ?? 0) + per)
         }
       }
     }

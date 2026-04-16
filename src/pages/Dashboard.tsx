@@ -13,9 +13,26 @@ import {
 import { ChevronRight, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import { formatINR, startOfWeek } from '../lib/format'
+import { perShareFor } from '../lib/settlement'
 import { MemberDetailsModal } from '../components/MemberDetailsModal'
 import { SettlementDetailsModal } from '../components/SettlementDetailsModal'
 import type { Member } from '../lib/types'
+
+type RangeKey = '1d' | '7d' | '30d' | '90d' | 'all'
+const RANGE_LABEL: Record<RangeKey, string> = {
+  '1d': 'Today',
+  '7d': 'Last 7 days',
+  '30d': 'Last 30 days',
+  '90d': 'Last 90 days',
+  all: 'All time',
+}
+const RANGE_DAYS: Record<RangeKey, number> = {
+  '1d': 1,
+  '7d': 7,
+  '30d': 30,
+  '90d': 90,
+  all: 0,
+}
 
 export function DashboardPage() {
   const { expenses, categories, members } = useData()
@@ -23,6 +40,7 @@ export function DashboardPage() {
   const [settleFilter, setSettleFilter] = useState<
     'pending' | 'settled' | null
   >(null)
+  const [rangeKey, setRangeKey] = useState<RangeKey>('7d')
 
   const stats = useMemo(() => {
     const today = new Date()
@@ -63,16 +81,29 @@ export function DashboardPage() {
       }))
       .filter((p) => p.value > 0)
 
+    const windowDays = RANGE_DAYS[rangeKey]
     const days: { date: string; amount: number }[] = []
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date()
-      d.setDate(d.getDate() - i)
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-      days.push({
-        date: `${d.getMonth() + 1}/${d.getDate()}`,
-        amount: byDay.get(key) ?? 0,
-      })
+    if (windowDays > 0) {
+      for (let i = windowDays - 1; i >= 0; i--) {
+        const d = new Date()
+        d.setDate(d.getDate() - i)
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+        days.push({
+          date: `${d.getMonth() + 1}/${d.getDate()}`,
+          amount: byDay.get(key) ?? 0,
+        })
+      }
+    } else {
+      const keys = [...byDay.keys()].sort()
+      for (const key of keys) {
+        const [, mm, dd] = key.split('-')
+        days.push({
+          date: `${parseInt(mm, 10)}/${parseInt(dd, 10)}`,
+          amount: byDay.get(key) ?? 0,
+        })
+      }
     }
+    const rangeTotal = days.reduce((s, d) => s + d.amount, 0)
 
     return {
       total,
@@ -83,12 +114,13 @@ export function DashboardPage() {
       topCat,
       pie,
       days,
+      rangeTotal,
       weekStartLabel: weekStart.toLocaleDateString('en-IN', {
         day: 'numeric',
         month: 'short',
       }),
     }
-  }, [expenses, categories])
+  }, [expenses, categories, rangeKey])
 
   const memberStats = useMemo(() => {
     const paid = new Map<string, number>()
@@ -102,13 +134,11 @@ export function DashboardPage() {
     for (const e of expenses) {
       paid.set(e.paidBy, (paid.get(e.paidBy) ?? 0) + e.amount)
       const valid = e.splitAmong.filter((id) => share.has(id))
-      if (valid.length > 0) {
-        const per = e.amount / valid.length
-        for (const id of valid) {
-          share.set(id, (share.get(id) ?? 0) + per)
-          if (!e.settledBy.includes(id)) {
-            pending.set(id, (pending.get(id) ?? 0) + per)
-          }
+      for (const id of valid) {
+        const per = perShareFor(e, id)
+        share.set(id, (share.get(id) ?? 0) + per)
+        if (!e.settledBy.includes(id)) {
+          pending.set(id, (pending.get(id) ?? 0) + per)
         }
       }
     }
@@ -128,14 +158,16 @@ export function DashboardPage() {
     let totalSettled = 0
     let pendingCount = 0
     for (const e of expenses) {
-      const per = e.splitAmong.length
-        ? e.amount / e.splitAmong.length
-        : 0
-      const paidShares = e.settledBy.length
-      const pendingShares = e.splitAmong.length - paidShares
-      totalSettled += paidShares * per
-      totalPending += pendingShares * per
-      if (pendingShares > 0) pendingCount += 1
+      let hasPending = false
+      for (const id of e.splitAmong) {
+        const per = perShareFor(e, id)
+        if (e.settledBy.includes(id)) totalSettled += per
+        else {
+          totalPending += per
+          hasPending = true
+        }
+      }
+      if (hasPending) pendingCount += 1
     }
     return {
       totalPending: Math.round(totalPending * 100) / 100,
@@ -214,13 +246,27 @@ export function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <section className="card lg:col-span-3">
-          <div className="mb-3 flex items-baseline justify-between">
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-base font-semibold tracking-tight">
-              Last 14 days
+              Spend over time
             </h2>
-            <span className="text-xs text-neutral-500 dark:text-neutral-400">
-              daily spend
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
+                {formatINR(stats.rangeTotal)} in range
+              </span>
+              <select
+                value={rangeKey}
+                onChange={(e) => setRangeKey(e.target.value as RangeKey)}
+                aria-label="Chart time range"
+                className="rounded-lg border border-neutral-200 bg-white px-2 py-1 text-xs font-medium text-neutral-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200"
+              >
+                {(Object.keys(RANGE_LABEL) as RangeKey[]).map((k) => (
+                  <option key={k} value={k}>
+                    {RANGE_LABEL[k]}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">

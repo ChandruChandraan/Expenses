@@ -8,6 +8,7 @@ import { ExpenseForm } from './ExpenseForm'
 const NAV = [
   { to: '/', label: 'Dashboard', end: true },
   { to: '/expenses', label: 'Expenses', end: false },
+  { to: '/custom', label: 'Custom', end: false },
   { to: '/members', label: 'Members', end: false },
   { to: '/settings', label: 'Settings', end: false },
 ]

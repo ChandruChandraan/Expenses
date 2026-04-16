@@ -18,6 +18,8 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
+  // Defaults to dark on first load. The user's toggle choice is persisted
+  // in `loadTheme()` — only fresh profiles / SSR fall through to 'dark'.
   const [mode, setMode] = useState<ThemeMode>(() => loadTheme())
 
   useEffect(() => {

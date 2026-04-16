@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import { formatINR, prettyDate } from '../lib/format'
+import { isCustomSplit, pendingAmountFor } from '../lib/settlement'
 import { Modal } from '../components/Modal'
 import { ExpenseForm } from '../components/ExpenseForm'
 import { SettleModal } from '../components/SettleModal'
@@ -165,12 +166,15 @@ export function ExpensesPage() {
               const splitters = e.splitAmong
                 .map((id) => memberById.get(id)?.name ?? '?')
                 .join(', ')
-              const per = e.amount / Math.max(e.splitAmong.length, 1)
               const paidCount = e.settledBy.length
               const totalCount = e.splitAmong.length
               const fullySettled =
                 totalCount > 0 && paidCount === totalCount
-              const pendingAmount = per * (totalCount - paidCount)
+              const pendingAmount = pendingAmountFor(e)
+              const custom = isCustomSplit(e)
+              const per = custom
+                ? 0
+                : e.amount / Math.max(e.splitAmong.length, 1)
               return (
                 <li
                   key={e.id}
@@ -216,7 +220,8 @@ export function ExpensesPage() {
                     </div>
                     <div className="truncate text-xs text-neutral-500 dark:text-neutral-400">
                       Paid by {payer} · split among {splitters} (
-                      {formatINR(per)} each) · {paidCount}/{totalCount} paid
+                      {custom ? 'custom split' : `${formatINR(per)} each`}) ·{' '}
+                      {paidCount}/{totalCount} paid
                     </div>
                   </div>
                   <div className="flex-none text-right">
