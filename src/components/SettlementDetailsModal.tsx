@@ -22,18 +22,17 @@ export function SettlementDetailsModal({ open, filter, onClose }: Props) {
 
     return expenses
       .map((e) => {
-        const valid = e.splitAmong.filter((id) =>
-          members.some((m) => m.id === id),
-        )
-        const per = valid.length > 0 ? e.amount / valid.length : 0
-        const splitters = valid.map((sid) => ({
+        const per = e.splitAmong.length > 0 ? e.amount / e.splitAmong.length : 0
+        const splitters = e.splitAmong.map((sid) => ({
           id: sid,
           name: memberName(sid),
           paid: e.settledBy.includes(sid),
+          valid: members.some((m) => m.id === sid),
         }))
         const pendingCount = splitters.filter((s) => !s.paid).length
         const paidCount = splitters.filter((s) => s.paid).length
         const pendingAmount = pendingCount * per
+        const settledAmount = paidCount * per
         return {
           expense: e,
           cat: catById.get(e.categoryId),
@@ -43,7 +42,7 @@ export function SettlementDetailsModal({ open, filter, onClose }: Props) {
           pendingCount,
           paidCount,
           pendingAmount,
-          fullySettled: pendingCount === 0 && valid.length > 0,
+          settledAmount,
         }
       })
       .filter((r) =>
@@ -54,7 +53,7 @@ export function SettlementDetailsModal({ open, filter, onClose }: Props) {
   const total =
     filter === 'pending'
       ? rows.reduce((s, r) => s + r.pendingAmount, 0)
-      : rows.reduce((s, r) => s + r.paidCount * r.per, 0)
+      : rows.reduce((s, r) => s + r.settledAmount, 0)
 
   const title =
     filter === 'pending'
