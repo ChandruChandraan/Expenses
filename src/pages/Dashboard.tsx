@@ -14,11 +14,15 @@ import { ChevronRight, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import { formatINR, startOfWeek } from '../lib/format'
 import { MemberDetailsModal } from '../components/MemberDetailsModal'
+import { SettlementDetailsModal } from '../components/SettlementDetailsModal'
 import type { Member } from '../lib/types'
 
 export function DashboardPage() {
   const { expenses, categories, members } = useData()
   const [detailMember, setDetailMember] = useState<Member | null>(null)
+  const [settleFilter, setSettleFilter] = useState<
+    'pending' | 'settled' | null
+  >(null)
 
   const stats = useMemo(() => {
     const today = new Date()
@@ -194,15 +198,17 @@ export function DashboardPage() {
           sub={
             settlement.pendingCount === 0
               ? 'Everyone is settled up'
-              : `${settlement.pendingCount} ${settlement.pendingCount === 1 ? 'expense' : 'expenses'} waiting`
+              : `${settlement.pendingCount} ${settlement.pendingCount === 1 ? 'expense' : 'expenses'} waiting · tap for details`
           }
           accent="amber"
+          onClick={() => setSettleFilter('pending')}
         />
         <SummaryCard
           label="Already settled"
           value={formatINR(settlement.totalSettled)}
-          sub={`${expenses.length} ${expenses.length === 1 ? 'expense' : 'expenses'} tracked`}
+          sub={`${expenses.length} ${expenses.length === 1 ? 'expense' : 'expenses'} tracked · tap for details`}
           accent="emerald"
+          onClick={() => setSettleFilter('settled')}
         />
       </div>
 
@@ -352,6 +358,12 @@ export function DashboardPage() {
         member={detailMember}
         onClose={() => setDetailMember(null)}
       />
+
+      <SettlementDetailsModal
+        open={settleFilter !== null}
+        filter={settleFilter ?? 'pending'}
+        onClose={() => setSettleFilter(null)}
+      />
     </div>
   )
 }
@@ -363,6 +375,7 @@ function SummaryCard({
   trend,
   accent = 'indigo',
   icon,
+  onClick,
 }: {
   label: string
   value: string
@@ -370,6 +383,7 @@ function SummaryCard({
   trend?: number
   accent?: 'indigo' | 'sky' | 'emerald' | 'amber'
   icon?: React.ReactNode
+  onClick?: () => void
 }) {
   const accents: Record<string, string> = {
     indigo:
@@ -380,8 +394,21 @@ function SummaryCard({
     amber:
       'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300',
   }
+  const clickable = Boolean(onClick)
   return (
-    <div className="card">
+    <div
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (!clickable) return
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick?.()
+        }
+      }}
+      className={`card ${clickable ? 'cursor-pointer transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500/40' : ''}`}
+    >
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           {label}

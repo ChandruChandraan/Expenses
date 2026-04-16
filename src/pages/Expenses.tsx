@@ -16,6 +16,7 @@ import { Modal } from '../components/Modal'
 import { ExpenseForm } from '../components/ExpenseForm'
 import { SettleModal } from '../components/SettleModal'
 import { BulkAddModal } from '../components/BulkAddModal'
+import { ConfirmModal } from '../components/ConfirmModal'
 import type { Expense } from '../lib/types'
 
 export function ExpensesPage() {
@@ -28,6 +29,7 @@ export function ExpensesPage() {
   const [bulkOpen, setBulkOpen] = useState(false)
   const [editing, setEditing] = useState<Expense | null>(null)
   const [settling, setSettling] = useState<Expense | null>(null)
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -70,11 +72,10 @@ export function ExpensesPage() {
             type="button"
             onClick={() => {
               if (expenses.length === 0) return
-              if (confirm('Delete all expenses? This cannot be undone.')) {
-                clearAllExpenses()
-              }
+              setClearConfirmOpen(true)
             }}
-            className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-rose-400 dark:hover:bg-rose-500/10"
+            disabled={expenses.length === 0}
+            className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-rose-400 dark:hover:bg-rose-500/10"
           >
             Clear all
           </button>
@@ -294,6 +295,17 @@ export function ExpensesPage() {
       />
 
       <BulkAddModal open={bulkOpen} onClose={() => setBulkOpen(false)} />
+
+      <ConfirmModal
+        open={clearConfirmOpen}
+        title="Delete all expenses?"
+        description={`This will permanently remove all ${expenses.length} expenses. Members and categories stay intact. This action cannot be undone.`}
+        confirmLabel="Yes, delete all"
+        cancelLabel="No, keep them"
+        tone="danger"
+        onConfirm={clearAllExpenses}
+        onClose={() => setClearConfirmOpen(false)}
+      />
     </div>
   )
 }
