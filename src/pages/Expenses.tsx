@@ -3,6 +3,7 @@ import {
   BadgeCheck,
   CircleDollarSign,
   Filter,
+  Layers,
   Pencil,
   Plus,
   Search,
@@ -14,6 +15,7 @@ import { formatINR, prettyDate } from '../lib/format'
 import { Modal } from '../components/Modal'
 import { ExpenseForm } from '../components/ExpenseForm'
 import { SettleModal } from '../components/SettleModal'
+import { BulkAddModal } from '../components/BulkAddModal'
 import type { Expense } from '../lib/types'
 
 export function ExpensesPage() {
@@ -23,6 +25,7 @@ export function ExpensesPage() {
   const [categoryId, setCategoryId] = useState<string>('All')
   const [memberId, setMemberId] = useState<string>('All')
   const [open, setOpen] = useState(false)
+  const [bulkOpen, setBulkOpen] = useState(false)
   const [editing, setEditing] = useState<Expense | null>(null)
   const [settling, setSettling] = useState<Expense | null>(null)
 
@@ -74,6 +77,14 @@ export function ExpensesPage() {
             className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-rose-400 dark:hover:bg-rose-500/10"
           >
             Clear all
+          </button>
+          <button
+            type="button"
+            onClick={() => setBulkOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+          >
+            <Layers className="h-4 w-4" />
+            Bulk add
           </button>
           <button
             type="button"
@@ -281,6 +292,8 @@ export function ExpensesPage() {
         }
         onClose={() => setSettling(null)}
       />
+
+      <BulkAddModal open={bulkOpen} onClose={() => setBulkOpen(false)} />
     </div>
   )
 }

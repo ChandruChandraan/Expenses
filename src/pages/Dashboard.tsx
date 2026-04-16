@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Bar,
   BarChart,
@@ -10,12 +10,15 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { TrendingDown, TrendingUp, Wallet } from 'lucide-react'
+import { ChevronRight, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import { formatINR, startOfWeek } from '../lib/format'
+import { MemberDetailsModal } from '../components/MemberDetailsModal'
+import type { Member } from '../lib/types'
 
 export function DashboardPage() {
   const { expenses, categories, members } = useData()
+  const [detailMember, setDetailMember] = useState<Member | null>(null)
 
   const stats = useMemo(() => {
     const today = new Date()
@@ -297,8 +300,17 @@ export function DashboardPage() {
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
               {memberStats.map((s) => (
-                <tr key={s.member.id}>
-                  <td className="py-2 pr-4 font-medium">{s.member.name}</td>
+                <tr
+                  key={s.member.id}
+                  onClick={() => setDetailMember(s.member)}
+                  className="cursor-pointer transition hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
+                >
+                  <td className="py-2 pr-4 font-medium">
+                    <span className="inline-flex items-center gap-1">
+                      {s.member.name}
+                      <ChevronRight className="h-3.5 w-3.5 text-neutral-400" />
+                    </span>
+                  </td>
                   <td className="py-2 pr-4 text-right tabular-nums">
                     {formatINR(s.paid)}
                   </td>
@@ -331,7 +343,15 @@ export function DashboardPage() {
             </tbody>
           </table>
         </div>
+        <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+          Tap any row to see the full settlement breakdown.
+        </p>
       </section>
+
+      <MemberDetailsModal
+        member={detailMember}
+        onClose={() => setDetailMember(null)}
+      />
     </div>
   )
 }

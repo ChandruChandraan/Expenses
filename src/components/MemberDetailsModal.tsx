@@ -36,31 +36,26 @@ export function MemberDetailsModal({ member, onClose }: Props) {
       if (valid.length === 0) continue
       const per = e.amount / valid.length
 
-      // Money THIS member needs to pay to others
-      if (
-        valid.includes(member.id) &&
-        e.paidBy !== member.id &&
-        !e.settledBy.includes(member.id)
-      ) {
+      // Money THIS member has to pay to others (show even if already paid)
+      if (valid.includes(member.id) && e.paidBy !== member.id) {
         owesList.push({
           expense: e,
           counterpart: nameOf(e.paidBy),
           share: per,
-          paid: false,
+          paid: e.settledBy.includes(member.id),
           splitterId: member.id,
         })
       }
 
-      // Money OWED to this member (they paid, others haven't settled)
+      // Money OWED to this member (they paid; show all splitters, even settled)
       if (e.paidBy === member.id) {
         for (const sid of valid) {
           if (sid === member.id) continue
-          if (e.settledBy.includes(sid)) continue
           owedList.push({
             expense: e,
             counterpart: nameOf(sid),
             share: per,
-            paid: false,
+            paid: e.settledBy.includes(sid),
             splitterId: sid,
           })
         }
@@ -70,32 +65,37 @@ export function MemberDetailsModal({ member, onClose }: Props) {
     return { owes: owesList, owed: owedList }
   }, [member, expenses, members])
 
-  const totalOwes = owes.reduce((s, r) => s + r.share, 0)
-  const totalOwed = owed.reduce((s, r) => s + r.share, 0)
-  const net = totalOwed - totalOwes
-  const catById = useMemo(() => {
-    const m = new Map(categories.map((c) => [c.id, c]))
-    return m
-  }, [categories])
+  const pendingOwes = owes
+    .filter((r) => !r.paid)
+    .reduce((s, r) => s + r.share, 0)
+  const pendingOwed = owed
+    .filter((r) => !r.paid)
+    .reduce((s, r) => s + r.share, 0)
+  const net = pendingOwed - pendingOwes
+
+  const catById = useMemo(
+    () => new Map(categories.map((c) => [c.id, c])),
+    [categories],
+  )
 
   return (
     <Modal
       open={member !== null}
       onClose={onClose}
       title={member ? `${member.name} · settlement details` : ''}
-      description="Who this member needs to pay and who owes them money."
+      description="Who this member needs to pay and who owes them money. Rows stay visible once paid — toggle the dropdown to flip status."
     >
       {member && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <SummaryTile
               label="Will pay"
-              value={formatINR(totalOwes)}
+              value={formatINR(pendingOwes)}
               tone="amber"
             />
             <SummaryTile
               label="Owed to them"
-              value={formatINR(totalOwed)}
+              value={formatINR(pendingOwed)}
               tone="emerald"
             />
             <SummaryTile
@@ -107,23 +107,25 @@ export function MemberDetailsModal({ member, onClose }: Props) {
 
           <Section
             title={`${member.name} will pay`}
-            emptyLabel={`${member.name} has no pending shares to pay.`}
+            emptyLabel={`${member.name} is not splitting any expense paid by others.`}
             rows={owes}
             rowSubtitle={(r) => `to ${r.counterpart}`}
             catById={catById}
             onChange={(r, next) => {
-              if (next === 'paid') togglePaid(r.expense.id, member.id)
+              const nowPaid = next === 'paid'
+              if (nowPaid !== r.paid) togglePaid(r.expense.id, member.id)
             }}
           />
 
           <Section
             title={`Others will pay ${member.name}`}
-            emptyLabel={`No one owes ${member.name} right now.`}
+            emptyLabel={`${member.name} hasn't paid for anyone else.`}
             rows={owed}
             rowSubtitle={(r) => `from ${r.counterpart}`}
             catById={catById}
             onChange={(r, next) => {
-              if (next === 'paid') togglePaid(r.expense.id, r.splitterId)
+              const nowPaid = next === 'paid'
+              if (nowPaid !== r.paid) togglePaid(r.expense.id, r.splitterId)
             }}
           />
 
@@ -164,7 +166,9 @@ function SummaryTile({
       <div className="text-[11px] font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
         {label}
       </div>
-      <div className={`mt-1 text-lg font-semibold tabular-nums ${toneMap[tone]}`}>
+      <div
+        className={`mt-1 text-lg font-semibold tabular-nums ${toneMap[tone]}`}
+      >
         {value}
       </div>
     </div>
@@ -186,10 +190,23 @@ function Section({
   catById: Map<string, { id: string; name: string; color: string }>
   onChange: (row: Row, next: 'paid' | 'pending') => void
 }) {
+  const pendingCount = rows.filter((r) => !r.paid).length
+  const paidCount = rows.filter((r) => r.paid).length
   return (
     <div className="rounded-xl border border-neutral-200 dark:border-neutral-800">
-      <div className="border-b border-neutral-200 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
-        {title}
+      <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+        <span>{title}</span>
+        {rows.length > 0 && (
+          <span className="text-[11px] font-medium normal-case tracking-normal">
+            <span className="text-amber-600 dark:text-amber-400">
+              {pendingCount} pending
+            </span>
+            <span className="px-1 text-neutral-400">·</span>
+            <span className="text-emerald-600 dark:text-emerald-400">
+              {paidCount} paid
+            </span>
+          </span>
+        )}
       </div>
       {rows.length === 0 ? (
         <div className="px-4 py-3 text-sm text-neutral-500 dark:text-neutral-400">
@@ -224,7 +241,13 @@ function Section({
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold tabular-nums">
+                  <span
+                    className={`text-sm font-semibold tabular-nums ${
+                      r.paid
+                        ? 'text-neutral-400 line-through dark:text-neutral-500'
+                        : ''
+                    }`}
+                  >
                     {formatINR(r.share)}
                   </span>
                   <StatusSelect
