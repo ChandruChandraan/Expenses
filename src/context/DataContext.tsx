@@ -34,14 +34,18 @@ type DataContextValue = {
 
 const DataContext = createContext<DataContextValue | null>(null)
 
+function initialData() {
+  const members = loadInitialMembers()
+  const categories = loadInitialCategories()
+  const expenses = loadInitialExpenses(members, categories)
+  return { members, categories, expenses }
+}
+
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [members, setMembers] = useState<Member[]>(() => loadInitialMembers())
-  const [categories, setCategories] = useState<Category[]>(() =>
-    loadInitialCategories(),
-  )
-  const [expenses, setExpenses] = useState<Expense[]>(() =>
-    loadInitialExpenses(loadInitialMembers(), loadInitialCategories()),
-  )
+  const seed = useMemo(() => initialData(), [])
+  const [members, setMembers] = useState<Member[]>(seed.members)
+  const [categories, setCategories] = useState<Category[]>(seed.categories)
+  const [expenses, setExpenses] = useState<Expense[]>(seed.expenses)
 
   useEffect(() => {
     saveJSON(KEYS.members, members)
