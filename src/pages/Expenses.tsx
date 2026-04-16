@@ -1,9 +1,19 @@
 import { useMemo, useState } from 'react'
-import { Filter, Pencil, Plus, Search, Trash2, Users } from 'lucide-react'
+import {
+  BadgeCheck,
+  CircleDollarSign,
+  Filter,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  Users,
+} from 'lucide-react'
 import { useData } from '../context/DataContext'
 import { formatINR, prettyDate } from '../lib/format'
 import { Modal } from '../components/Modal'
 import { ExpenseForm } from '../components/ExpenseForm'
+import { SettleModal } from '../components/SettleModal'
 import type { Expense } from '../lib/types'
 
 export function ExpensesPage() {
@@ -14,6 +24,7 @@ export function ExpensesPage() {
   const [memberId, setMemberId] = useState<string>('All')
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Expense | null>(null)
+  const [settling, setSettling] = useState<Expense | null>(null)
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -143,6 +154,11 @@ export function ExpensesPage() {
                 .map((id) => memberById.get(id)?.name ?? '?')
                 .join(', ')
               const per = e.amount / Math.max(e.splitAmong.length, 1)
+              const paidCount = e.settledBy.length
+              const totalCount = e.splitAmong.length
+              const fullySettled =
+                totalCount > 0 && paidCount === totalCount
+              const pendingAmount = per * (totalCount - paidCount)
               return (
                 <li
                   key={e.id}
@@ -155,13 +171,40 @@ export function ExpensesPage() {
                     {cat?.name?.[0] ?? '?'}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{e.description}</div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="truncate font-medium">
+                        {e.description || (
+                          <span className="text-neutral-400 dark:text-neutral-500">
+                            No description
+                          </span>
+                        )}
+                      </span>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                          fullySettled
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                            : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+                        }`}
+                      >
+                        {fullySettled ? (
+                          <>
+                            <BadgeCheck className="h-3 w-3" />
+                            Settled
+                          </>
+                        ) : (
+                          <>
+                            <CircleDollarSign className="h-3 w-3" />
+                            {formatINR(pendingAmount)} pending
+                          </>
+                        )}
+                      </span>
+                    </div>
                     <div className="truncate text-xs text-neutral-500 dark:text-neutral-400">
                       {cat?.name ?? 'Uncategorized'} · {prettyDate(e.date)}
                     </div>
                     <div className="truncate text-xs text-neutral-500 dark:text-neutral-400">
                       Paid by {payer} · split among {splitters} (
-                      {formatINR(per)} each)
+                      {formatINR(per)} each) · {paidCount}/{totalCount} paid
                     </div>
                   </div>
                   <div className="flex-none text-right">
@@ -169,6 +212,15 @@ export function ExpensesPage() {
                       {formatINR(e.amount)}
                     </div>
                     <div className="mt-1 flex items-center justify-end gap-2 text-neutral-400">
+                      <button
+                        type="button"
+                        onClick={() => setSettling(e)}
+                        className="hover:text-emerald-600 dark:hover:text-emerald-400"
+                        aria-label="Payment status"
+                        title="Payment status"
+                      >
+                        <CircleDollarSign className="h-4 w-4" />
+                      </button>
                       <button
                         type="button"
                         onClick={() => setEditing(e)}
@@ -220,6 +272,15 @@ export function ExpensesPage() {
           />
         )}
       </Modal>
+
+      <SettleModal
+        expense={
+          settling
+            ? expenses.find((e) => e.id === settling.id) ?? null
+            : null
+        }
+        onClose={() => setSettling(null)}
+      />
     </div>
   )
 }

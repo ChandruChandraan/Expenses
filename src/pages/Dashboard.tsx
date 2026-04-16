@@ -86,27 +86,56 @@ export function DashboardPage() {
   const memberStats = useMemo(() => {
     const paid = new Map<string, number>()
     const share = new Map<string, number>()
+    const pending = new Map<string, number>()
     for (const m of members) {
       paid.set(m.id, 0)
       share.set(m.id, 0)
+      pending.set(m.id, 0)
     }
     for (const e of expenses) {
       paid.set(e.paidBy, (paid.get(e.paidBy) ?? 0) + e.amount)
       const valid = e.splitAmong.filter((id) => share.has(id))
       if (valid.length > 0) {
         const per = e.amount / valid.length
-        for (const id of valid) share.set(id, (share.get(id) ?? 0) + per)
+        for (const id of valid) {
+          share.set(id, (share.get(id) ?? 0) + per)
+          if (!e.settledBy.includes(id)) {
+            pending.set(id, (pending.get(id) ?? 0) + per)
+          }
+        }
       }
     }
     return members.map((m) => ({
       member: m,
       paid: Math.round((paid.get(m.id) ?? 0) * 100) / 100,
       share: Math.round((share.get(m.id) ?? 0) * 100) / 100,
+      pending: Math.round((pending.get(m.id) ?? 0) * 100) / 100,
       net:
         Math.round(((paid.get(m.id) ?? 0) - (share.get(m.id) ?? 0)) * 100) /
         100,
     }))
   }, [expenses, members])
+
+  const settlement = useMemo(() => {
+    let totalPending = 0
+    let totalSettled = 0
+    let pendingCount = 0
+    for (const e of expenses) {
+      const per = e.splitAmong.length
+        ? e.amount / e.splitAmong.length
+        : 0
+      const paidShares = e.settledBy.length
+      const pendingShares = e.splitAmong.length - paidShares
+      totalSettled += paidShares * per
+      totalPending += pendingShares * per
+      if (pendingShares > 0) pendingCount += 1
+    }
+    return {
+      totalPending: Math.round(totalPending * 100) / 100,
+      totalSettled: Math.round(totalSettled * 100) / 100,
+      pendingCount,
+    }
+  }, [expenses])
 
   const topCategoryName =
     stats.topCat != null
@@ -152,6 +181,25 @@ export function DashboardPage() {
           value={topCategoryName}
           sub={stats.topCat ? formatINR(stats.topCat[1]) : '—'}
           accent="amber"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <SummaryCard
+          label="Pending to collect"
+          value={formatINR(settlement.totalPending)}
+          sub={
+            settlement.pendingCount === 0
+              ? 'Everyone is settled up'
+              : `${settlement.pendingCount} ${settlement.pendingCount === 1 ? 'expense' : 'expenses'} waiting`
+          }
+          accent="amber"
+        />
+        <SummaryCard
+          label="Already settled"
+          value={formatINR(settlement.totalSettled)}
+          sub={`${expenses.length} ${expenses.length === 1 ? 'expense' : 'expenses'} tracked`}
+          accent="emerald"
         />
       </div>
 
@@ -243,6 +291,7 @@ export function DashboardPage() {
                 <th className="py-2 pr-4 font-medium">Member</th>
                 <th className="py-2 pr-4 text-right font-medium">Paid</th>
                 <th className="py-2 pr-4 text-right font-medium">Share</th>
+                <th className="py-2 pr-4 text-right font-medium">Pending</th>
                 <th className="py-2 text-right font-medium">Net</th>
               </tr>
             </thead>
@@ -255,6 +304,15 @@ export function DashboardPage() {
                   </td>
                   <td className="py-2 pr-4 text-right tabular-nums">
                     {formatINR(s.share)}
+                  </td>
+                  <td
+                    className={`py-2 pr-4 text-right tabular-nums ${
+                      s.pending > 0
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : 'text-neutral-400 dark:text-neutral-500'
+                    }`}
+                  >
+                    {formatINR(s.pending)}
                   </td>
                   <td
                     className={`py-2 text-right font-semibold tabular-nums ${

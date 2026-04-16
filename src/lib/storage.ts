@@ -1,10 +1,14 @@
 import type { Category, Expense, Member, ThemeMode } from './types'
 
 export const KEYS = {
-  expenses: 'expense-tracker:v3:expenses',
-  members: 'expense-tracker:v3:members',
-  categories: 'expense-tracker:v3:categories',
-  theme: 'expense-tracker:v3:theme',
+  expenses: 'expense-tracker:v4:expenses',
+  members: 'expense-tracker:v4:members',
+  categories: 'expense-tracker:v4:categories',
+  theme: 'expense-tracker:v4:theme',
+  legacyV3Expenses: 'expense-tracker:v3:expenses',
+  legacyV3Members: 'expense-tracker:v3:members',
+  legacyV3Categories: 'expense-tracker:v3:categories',
+  legacyV3Theme: 'expense-tracker:v3:theme',
   legacyV2Expenses: 'expense-tracker:v2:expenses',
   legacyV2Members: 'expense-tracker:v2:members',
   legacyV1: 'expense-tracker:v1',
@@ -57,7 +61,8 @@ export function saveJSON<T>(key: string, value: T): void {
 }
 
 export function loadTheme(): ThemeMode {
-  const stored = localStorage.getItem(KEYS.theme)
+  const stored =
+    localStorage.getItem(KEYS.theme) ?? localStorage.getItem(KEYS.legacyV3Theme)
   if (stored === 'dark' || stored === 'light') return stored
   if (
     typeof window !== 'undefined' &&
@@ -75,8 +80,10 @@ export function saveTheme(mode: ThemeMode): void {
 export function loadInitialMembers(): Member[] {
   const stored = loadJSON<Member[]>(KEYS.members, [])
   if (stored.length > 0) return stored
-  const legacy = loadJSON<Member[]>(KEYS.legacyV2Members, [])
-  if (legacy.length > 0) return legacy
+  const v3 = loadJSON<Member[]>(KEYS.legacyV3Members, [])
+  if (v3.length > 0) return v3
+  const v2 = loadJSON<Member[]>(KEYS.legacyV2Members, [])
+  if (v2.length > 0) return v2
   return [
     { id: uid(), name: 'Me' },
     { id: uid(), name: 'Friend' },
@@ -86,6 +93,8 @@ export function loadInitialMembers(): Member[] {
 export function loadInitialCategories(): Category[] {
   const stored = loadJSON<Category[]>(KEYS.categories, [])
   if (stored.length > 0) return stored
+  const v3 = loadJSON<Category[]>(KEYS.legacyV3Categories, [])
+  if (v3.length > 0) return v3
   return DEFAULT_CATEGORIES.map((c) => ({ ...c, id: uid() }))
 }
 
@@ -102,12 +111,19 @@ type LegacyV2 = LegacyV1 & {
   splitAmong: string[]
 }
 
+type LegacyV3 = Omit<Expense, 'settledBy'>
+
 export function loadInitialExpenses(
   members: Member[],
   categories: Category[],
 ): Expense[] {
   const stored = loadJSON<Expense[]>(KEYS.expenses, [])
-  if (stored.length > 0) return stored
+  if (stored.length > 0) {
+    return stored.map((e) => ({
+      ...e,
+      settledBy: Array.isArray(e.settledBy) ? e.settledBy : [e.paidBy],
+    }))
+  }
 
   const byName = new Map<string, string>()
   for (const c of categories) byName.set(c.name.toLowerCase(), c.id)
@@ -116,6 +132,14 @@ export function loadInitialExpenses(
 
   const resolveCat = (name: string) =>
     byName.get((name ?? '').toLowerCase()) ?? otherId
+
+  const v3 = loadJSON<LegacyV3[]>(KEYS.legacyV3Expenses, [])
+  if (v3.length > 0) {
+    return v3.map((e) => ({
+      ...e,
+      settledBy: [e.paidBy],
+    }))
+  }
 
   const v2 = loadJSON<LegacyV2[]>(KEYS.legacyV2Expenses, [])
   if (v2.length > 0) {
@@ -127,6 +151,7 @@ export function loadInitialExpenses(
       date: e.date,
       paidBy: e.paidBy,
       splitAmong: e.splitAmong,
+      settledBy: [e.paidBy],
     }))
   }
 
@@ -141,5 +166,6 @@ export function loadInitialExpenses(
     date: e.date,
     paidBy: firstMemberId,
     splitAmong: [firstMemberId],
+    settledBy: [firstMemberId],
   }))
 }

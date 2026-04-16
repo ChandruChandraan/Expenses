@@ -94,6 +94,12 @@ export function ExpenseForm({ initial, onSubmitted, onCancel }: Props) {
       setError('Pick a category.')
       return
     }
+    const existingSettled = initial?.settledBy ?? []
+    const settledBy = Array.from(
+      new Set(
+        [paidBy, ...existingSettled].filter((id) => splitAmong.includes(id)),
+      ),
+    )
     const payload = {
       amount: Math.round(numericAmount * 100) / 100,
       description: description.trim(),
@@ -101,6 +107,7 @@ export function ExpenseForm({ initial, onSubmitted, onCancel }: Props) {
       date,
       paidBy,
       splitAmong: [...splitAmong],
+      settledBy,
     }
     if (isEdit && initial) {
       updateExpense(initial.id, payload)

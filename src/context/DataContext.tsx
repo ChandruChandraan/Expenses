@@ -30,6 +30,9 @@ type DataContextValue = {
   addExpense: (e: Omit<Expense, 'id'>) => void
   updateExpense: (id: string, patch: Omit<Expense, 'id'>) => void
   removeExpense: (id: string) => void
+  togglePaid: (id: string, memberId: string) => void
+  markAllPaid: (id: string) => void
+  markAllPending: (id: string) => void
   clearAllExpenses: () => void
 }
 
@@ -163,6 +166,32 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setExpenses((prev) => prev.filter((e) => e.id !== id))
   }, [])
 
+  const togglePaid = useCallback((id: string, memberId: string) => {
+    setExpenses((prev) =>
+      prev.map((e) => {
+        if (e.id !== id) return e
+        if (!e.splitAmong.includes(memberId)) return e
+        const alreadyPaid = e.settledBy.includes(memberId)
+        const nextSettled = alreadyPaid
+          ? e.settledBy.filter((x) => x !== memberId)
+          : [...e.settledBy, memberId]
+        return { ...e, settledBy: nextSettled }
+      }),
+    )
+  }, [])
+
+  const markAllPaid = useCallback((id: string) => {
+    setExpenses((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, settledBy: [...e.splitAmong] } : e)),
+    )
+  }, [])
+
+  const markAllPending = useCallback((id: string) => {
+    setExpenses((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, settledBy: [e.paidBy] } : e)),
+    )
+  }, [])
+
   const clearAllExpenses = useCallback(() => {
     setExpenses([])
   }, [])
@@ -181,6 +210,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       addExpense,
       updateExpense,
       removeExpense,
+      togglePaid,
+      markAllPaid,
+      markAllPending,
       clearAllExpenses,
     }),
     [
@@ -196,6 +228,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       addExpense,
       updateExpense,
       removeExpense,
+      togglePaid,
+      markAllPaid,
+      markAllPending,
       clearAllExpenses,
     ],
   )

@@ -17,6 +17,7 @@ export type Expense = {
   date: string
   paidBy: string
   splitAmong: string[]
+  settledBy: string[]
 }
 
 export type ThemeMode = 'light' | 'dark'

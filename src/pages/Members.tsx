@@ -15,10 +15,12 @@ export function MembersPage() {
   const stats = useMemo(() => {
     const paid = new Map<string, number>()
     const share = new Map<string, number>()
+    const pending = new Map<string, number>()
     const count = new Map<string, number>()
     for (const m of members) {
       paid.set(m.id, 0)
       share.set(m.id, 0)
+      pending.set(m.id, 0)
       count.set(m.id, 0)
     }
     for (const e of expenses) {
@@ -31,6 +33,9 @@ export function MembersPage() {
         for (const id of valid) {
           share.set(id, (share.get(id) ?? 0) + per)
           count.set(id, (count.get(id) ?? 0) + 1)
+          if (!e.settledBy.includes(id)) {
+            pending.set(id, (pending.get(id) ?? 0) + per)
+          }
         }
       }
     }
@@ -38,6 +43,7 @@ export function MembersPage() {
       member: m,
       paid: Math.round((paid.get(m.id) ?? 0) * 100) / 100,
       share: Math.round((share.get(m.id) ?? 0) * 100) / 100,
+      pending: Math.round((pending.get(m.id) ?? 0) * 100) / 100,
       net:
         Math.round(((paid.get(m.id) ?? 0) - (share.get(m.id) ?? 0)) * 100) /
         100,
@@ -145,7 +151,7 @@ export function MembersPage() {
                     </div>
                   )}
                 </div>
-                <div className="grid grid-cols-3 gap-6 text-right text-sm tabular-nums">
+                <div className="grid grid-cols-2 gap-4 text-right text-sm tabular-nums sm:grid-cols-4 sm:gap-6">
                   <div>
                     <div className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                       Paid
@@ -157,6 +163,20 @@ export function MembersPage() {
                       Share
                     </div>
                     <div>{formatINR(s.share)}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                      Pending
+                    </div>
+                    <div
+                      className={
+                        s.pending > 0
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : 'text-neutral-400 dark:text-neutral-500'
+                      }
+                    >
+                      {formatINR(s.pending)}
+                    </div>
                   </div>
                   <div>
                     <div className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
