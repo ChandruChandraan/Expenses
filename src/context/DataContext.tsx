@@ -37,7 +37,15 @@ const DataContext = createContext<DataContextValue | null>(null)
 function initialData() {
   const members = loadInitialMembers()
   const categories = loadInitialCategories()
-  const expenses = loadInitialExpenses(members, categories)
+  const loaded = loadInitialExpenses(members, categories)
+  const validIds = new Set(categories.map((c) => c.id))
+  const fallbackId =
+    categories.find((c) => c.name.toLowerCase() === 'other')?.id ??
+    categories[categories.length - 1]?.id ??
+    ''
+  const expenses = loaded.map((e) =>
+    validIds.has(e.categoryId) ? e : { ...e, categoryId: fallbackId },
+  )
   return { members, categories, expenses }
 }
 
