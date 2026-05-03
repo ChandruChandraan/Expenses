@@ -25,18 +25,18 @@ export function Layout() {
   const initial = (displayName.trim().charAt(0) || '?').toUpperCase()
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
-      <header className="sticky top-0 z-30 border-b border-neutral-200/70 bg-white/70 backdrop-blur dark:border-neutral-800/70 dark:bg-neutral-950/70">
-        <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2">
+      <header className="sticky top-0 z-30 border-b border-neutral-200/70 bg-white/80 backdrop-blur dark:border-neutral-800/70 dark:bg-neutral-950/80">
+        <div className="mx-auto flex max-w-5xl items-center gap-2 px-3 py-2.5 sm:gap-4 sm:px-6 sm:py-3">
+          <NavLink to="/" end className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900">
               <Wallet className="h-4 w-4" />
             </div>
-            <div className="text-sm font-semibold tracking-tight">
+            <div className="hidden text-sm font-semibold tracking-tight sm:block">
               Expense Tracker
             </div>
-          </div>
+          </NavLink>
 
-          <nav className="ml-4 hidden gap-1 sm:flex">
+          <nav className="ml-2 hidden gap-1 lg:flex">
             {NAV.map((n) => (
               <NavLink
                 key={n.to}
@@ -55,12 +55,12 @@ export function Layout() {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-3">
             {email && (
               <NavLink
                 to="/profile"
                 title={email}
-                className="hidden items-center gap-2 rounded-full border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800 md:inline-flex"
+                className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
               >
                 {avatar ? (
                   <img
@@ -73,7 +73,7 @@ export function Layout() {
                     {initial}
                   </span>
                 )}
-                <span className="max-w-[120px] truncate font-medium">
+                <span className="hidden max-w-[120px] truncate font-medium sm:inline">
                   Hi, {displayName}
                 </span>
               </NavLink>
@@ -82,16 +82,17 @@ export function Layout() {
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+              aria-label="Add expense"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-900 px-2.5 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200 sm:px-3"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Add expense</span>
-              <span className="sm:hidden">Add</span>
             </button>
             <button
               type="button"
               onClick={() => void signOut()}
               title="Sign out"
+              aria-label="Sign out"
               className="inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-1.5 text-neutral-600 transition hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
             >
               <LogOut className="h-4 w-4" />
@@ -99,7 +100,7 @@ export function Layout() {
             </button>
           </div>
         </div>
-        <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 pb-2 sm:hidden">
+        <nav className="mx-auto -mt-0.5 flex max-w-5xl gap-1 overflow-x-auto px-3 pb-2 sm:px-6 lg:hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {NAV.map((n) => (
             <NavLink
               key={n.to}
@@ -119,7 +120,7 @@ export function Layout() {
         </nav>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+      <main className="mx-auto max-w-5xl px-3 py-5 sm:px-6 sm:py-8">
         <Outlet />
       </main>
 

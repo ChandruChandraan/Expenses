@@ -64,12 +64,12 @@ export function ExpensesPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Expenses</h1>
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Expenses</h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
             Search, filter, and manage every spend.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => {
@@ -179,7 +179,7 @@ export function ExpensesPage() {
               return (
                 <li
                   key={e.id}
-                  className="flex items-center gap-3 px-4 py-3 sm:px-5"
+                  className="flex items-start gap-3 px-3 py-3 sm:items-center sm:px-5"
                 >
                   <span
                     className="flex h-10 w-10 flex-none items-center justify-center rounded-xl text-xs font-semibold text-white"
@@ -188,35 +188,42 @@ export function ExpensesPage() {
                     {cat?.name?.[0] ?? '?'}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="truncate font-medium">
-                        {e.description || (
-                          <span className="text-neutral-400 dark:text-neutral-500">
-                            No description
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span className="truncate font-medium">
+                            {e.description || (
+                              <span className="text-neutral-400 dark:text-neutral-500">
+                                No description
+                              </span>
+                            )}
                           </span>
-                        )}
-                      </span>
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                          fullySettled
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
-                            : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
-                        }`}
-                      >
-                        {fullySettled ? (
-                          <>
-                            <BadgeCheck className="h-3 w-3" />
-                            Settled
-                          </>
-                        ) : (
-                          <>
-                            <CircleDollarSign className="h-3 w-3" />
-                            {fmt(pendingAmount)} pending
-                          </>
-                        )}
-                      </span>
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                              fullySettled
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+                            }`}
+                          >
+                            {fullySettled ? (
+                              <>
+                                <BadgeCheck className="h-3 w-3" />
+                                Settled
+                              </>
+                            ) : (
+                              <>
+                                <CircleDollarSign className="h-3 w-3" />
+                                {fmt(pendingAmount)} pending
+                              </>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex-none text-right text-sm font-semibold tabular-nums sm:text-base">
+                        {fmt(e.amount)}
+                      </div>
                     </div>
-                    <div className="truncate text-xs text-neutral-500 dark:text-neutral-400">
+                    <div className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400">
                       {cat?.name ?? 'Uncategorized'} · {prettyDate(e.date)}
                     </div>
                     <div className="truncate text-xs text-neutral-500 dark:text-neutral-400">
@@ -224,16 +231,11 @@ export function ExpensesPage() {
                       {custom ? 'custom split' : `${fmt(per)} each`}) ·{' '}
                       {paidCount}/{totalCount} paid
                     </div>
-                  </div>
-                  <div className="flex-none text-right">
-                    <div className="font-semibold tabular-nums">
-                      {fmt(e.amount)}
-                    </div>
-                    <div className="mt-1 flex items-center justify-end gap-2 text-neutral-400">
+                    <div className="mt-2 flex items-center gap-1 text-neutral-400">
                       <button
                         type="button"
                         onClick={() => setSettling(e)}
-                        className="hover:text-emerald-600 dark:hover:text-emerald-400"
+                        className="rounded-md p-1.5 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400"
                         aria-label="Payment status"
                         title="Payment status"
                       >
@@ -242,7 +244,7 @@ export function ExpensesPage() {
                       <button
                         type="button"
                         onClick={() => setEditing(e)}
-                        className="hover:text-indigo-600 dark:hover:text-indigo-400"
+                        className="rounded-md p-1.5 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400"
                         aria-label="Edit expense"
                       >
                         <Pencil className="h-4 w-4" />
@@ -250,7 +252,7 @@ export function ExpensesPage() {
                       <button
                         type="button"
                         onClick={() => removeExpense(e.id)}
-                        className="hover:text-rose-600 dark:hover:text-rose-400"
+                        className="rounded-md p-1.5 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
                         aria-label="Delete expense"
                       >
                         <Trash2 className="h-4 w-4" />

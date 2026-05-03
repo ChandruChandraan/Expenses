@@ -153,7 +153,7 @@ export function CustomExpensesPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
             Custom expenses
           </h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
@@ -380,7 +380,7 @@ export function CustomExpensesPage() {
               return (
                 <li
                   key={e.id}
-                  className="flex items-start gap-3 px-4 py-3 sm:px-5"
+                  className="flex items-start gap-3 px-3 py-3 sm:px-5"
                 >
                   <span
                     className="flex h-10 w-10 flex-none items-center justify-center rounded-xl text-xs font-semibold text-white"
@@ -389,20 +389,27 @@ export function CustomExpensesPage() {
                     {cat?.name?.[0] ?? '?'}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="truncate font-medium">
-                        {e.description || (
-                          <span className="text-neutral-400 dark:text-neutral-500">
-                            No description
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span className="truncate font-medium">
+                            {e.description || (
+                              <span className="text-neutral-400 dark:text-neutral-500">
+                                No description
+                              </span>
+                            )}
                           </span>
-                        )}
-                      </span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
-                        <SlidersHorizontal className="h-3 w-3" />
-                        Custom split
-                      </span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
+                            <SlidersHorizontal className="h-3 w-3" />
+                            Custom split
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex-none text-right text-sm font-semibold tabular-nums sm:text-base">
+                        {fmt(e.amount)}
+                      </div>
                     </div>
-                    <div className="truncate text-xs text-neutral-500 dark:text-neutral-400">
+                    <div className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400">
                       {cat?.name ?? 'Uncategorized'} · {prettyDate(e.date)} ·
                       paid by {payer}
                     </div>
@@ -425,16 +432,11 @@ export function CustomExpensesPage() {
                         )
                       })}
                     </ul>
-                  </div>
-                  <div className="flex-none text-right">
-                    <div className="font-semibold tabular-nums">
-                      {fmt(e.amount)}
-                    </div>
                     <button
                       type="button"
                       onClick={() => removeExpense(e.id)}
                       aria-label="Delete custom expense"
-                      className="mt-1 inline-flex items-center gap-1 text-xs text-neutral-500 hover:text-rose-600 dark:text-neutral-400 dark:hover:text-rose-400"
+                      className="mt-2 inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs text-neutral-500 hover:bg-rose-50 hover:text-rose-600 dark:text-neutral-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       Remove

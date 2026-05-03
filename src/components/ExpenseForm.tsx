@@ -139,8 +139,8 @@ export function ExpenseForm({ initial, onSubmitted, onCancel }: Props) {
         </select>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="sm:col-span-2">
           <div className="mb-1 flex items-baseline justify-between">
             <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
               Description

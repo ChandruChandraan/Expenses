@@ -85,7 +85,7 @@ export function MembersPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Members</h1>
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Members</h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
             People who share expenses with you.
           </p>
@@ -101,7 +101,7 @@ export function MembersPage() {
       </div>
 
       <div className="card overflow-hidden p-0">
-        <div className="border-b border-neutral-200 px-5 py-3 text-sm font-medium dark:border-neutral-800">
+        <div className="border-b border-neutral-200 px-4 py-3 text-sm font-medium dark:border-neutral-800 sm:px-5">
           {members.length} {members.length === 1 ? 'member' : 'members'}
         </div>
         <ul className="divide-y divide-neutral-200 dark:divide-neutral-800">
@@ -111,77 +111,100 @@ export function MembersPage() {
             return (
               <li
                 key={s.member.id}
-                className="flex flex-wrap items-center gap-4 px-5 py-3"
+                className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 sm:px-5"
               >
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!isEditing) setDetailMember(s.member)
-                  }}
-                  className="flex flex-1 items-center gap-3 text-left hover:opacity-80"
-                  aria-label={`Open details for ${s.member.name}`}
-                >
-                  <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-neutral-200 text-sm font-semibold text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
-                    {initial}
-                  </span>
-                  {isEditing ? (
-                    <></>
-                  ) : (
-                    <div>
-                      <div className="flex items-center gap-1 font-medium">
-                        {s.member.name}
-                        <ChevronRight className="h-4 w-4 text-neutral-400" />
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isEditing) setDetailMember(s.member)
+                    }}
+                    className="flex flex-1 items-center gap-3 text-left hover:opacity-80"
+                    aria-label={`Open details for ${s.member.name}`}
+                  >
+                    <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-neutral-200 text-sm font-semibold text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
+                      {initial}
+                    </span>
+                    {!isEditing && (
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1 font-medium">
+                          <span className="truncate">{s.member.name}</span>
+                          <ChevronRight className="h-4 w-4 flex-none text-neutral-400" />
+                        </div>
+                        <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                          {s.count} {s.count === 1 ? 'expense' : 'expenses'} · view breakdown
+                        </div>
                       </div>
-                      <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                        {s.count} {s.count === 1 ? 'expense' : 'expenses'} · view breakdown
-                      </div>
-                    </div>
-                  )}
-                </button>
-                {isEditing && (
-                    <div className="flex items-center gap-2">
-                      <input
-                        value={editingName}
-                        onChange={(ev) => setEditingName(ev.target.value)}
-                        autoFocus
-                        className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-900"
-                      />
+                    )}
+                  </button>
+                  {!isEditing && (
+                    <div className="flex flex-none items-center gap-1 sm:hidden">
                       <button
                         type="button"
                         onClick={() => {
-                          renameMember(s.member.id, editingName)
-                          setEditingId(null)
+                          setEditingId(s.member.id)
+                          setEditingName(s.member.name)
                         }}
-                        aria-label="Save"
-                        className="rounded-md p-1 text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
+                        aria-label="Rename"
+                        className="rounded-md p-2 text-neutral-500 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
                       >
-                        <Check className="h-4 w-4" />
+                        <Pencil className="h-4 w-4" />
                       </button>
                       <button
                         type="button"
-                        onClick={() => setEditingId(null)}
-                        aria-label="Cancel"
-                        className="rounded-md p-1 text-neutral-500 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
+                        onClick={() => handleDelete(s.member.id, s.member.name)}
+                        aria-label="Delete"
+                        className="rounded-md p-2 text-neutral-500 hover:bg-rose-50 hover:text-rose-600 dark:text-neutral-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
                       >
-                        <X className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
+                  )}
+                </div>
+                {isEditing && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      value={editingName}
+                      onChange={(ev) => setEditingName(ev.target.value)}
+                      autoFocus
+                      className="flex-1 rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        renameMember(s.member.id, editingName)
+                        setEditingId(null)
+                      }}
+                      aria-label="Save"
+                      className="rounded-md p-1.5 text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                      aria-label="Cancel"
+                      className="rounded-md p-1.5 text-neutral-500 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
                 )}
-                <div className="grid grid-cols-2 gap-4 text-right text-sm tabular-nums sm:grid-cols-4 sm:gap-6">
+                <div className="grid grid-cols-4 gap-2 text-sm tabular-nums sm:ml-auto sm:gap-6 sm:text-right">
                   <div>
-                    <div className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                    <div className="text-[10px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400 sm:text-xs">
                       Paid
                     </div>
                     <div>{fmt(s.paid)}</div>
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                    <div className="text-[10px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400 sm:text-xs">
                       Share
                     </div>
                     <div>{fmt(s.share)}</div>
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                    <div className="text-[10px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400 sm:text-xs">
                       Pending
                     </div>
                     <div
@@ -195,7 +218,7 @@ export function MembersPage() {
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                    <div className="text-[10px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400 sm:text-xs">
                       Net
                     </div>
                     <div
@@ -212,7 +235,7 @@ export function MembersPage() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="hidden items-center gap-1 sm:flex">
                   {!isEditing && (
                     <button
                       type="button"
