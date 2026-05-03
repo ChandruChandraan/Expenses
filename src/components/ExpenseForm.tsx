@@ -60,8 +60,8 @@ export function ExpenseForm({ initial, onSubmitted, onCancel }: Props) {
     )
   }
 
-  const handleAddMember = () => {
-    const added = addMember(newMemberName)
+  const handleAddMember = async () => {
+    const added = await addMember(newMemberName)
     if (!added) {
       setMemberError('Enter a unique name.')
       return
@@ -261,13 +261,13 @@ export function ExpenseForm({ initial, onSubmitted, onCancel }: Props) {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault()
-                  handleAddMember()
+                  void handleAddMember()
                 }
               }}
             />
             <button
               type="button"
-              onClick={handleAddMember}
+              onClick={() => void handleAddMember()}
               className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500"
             >
               Add

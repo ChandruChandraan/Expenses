@@ -10,7 +10,7 @@ export function SettingsPage() {
   const { mode, setMode } = useTheme()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
-  const [color, setColor] = useState(CATEGORY_COLORS[0])
+  const [color, setColor] = useState<string>(CATEGORY_COLORS[0])
   const [error, setError] = useState<string | null>(null)
 
   const countByCategory = categories.map((c) => ({

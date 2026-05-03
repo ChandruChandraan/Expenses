@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { Plus, Wallet } from 'lucide-react'
+import { LogOut, Plus, Wallet } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
 import { Modal } from './Modal'
 import { ExpenseForm } from './ExpenseForm'
+import { useAuth } from '../context/AuthContext'
 
 const NAV = [
   { to: '/', label: 'Dashboard', end: true },
@@ -15,6 +16,8 @@ const NAV = [
 
 export function Layout() {
   const [open, setOpen] = useState(false)
+  const { state, signOut } = useAuth()
+  const email = state.status === 'signed-in' ? state.user.email ?? '' : ''
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
       <header className="sticky top-0 z-30 border-b border-neutral-200/70 bg-white/70 backdrop-blur dark:border-neutral-800/70 dark:bg-neutral-950/70">
@@ -48,6 +51,14 @@ export function Layout() {
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
+            {email && (
+              <span
+                className="hidden md:inline text-xs text-neutral-500 dark:text-neutral-400 max-w-[160px] truncate"
+                title={email}
+              >
+                {email}
+              </span>
+            )}
             <ThemeToggle />
             <button
               type="button"
@@ -57,6 +68,15 @@ export function Layout() {
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Add expense</span>
               <span className="sm:hidden">Add</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              title="Sign out"
+              className="inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-1.5 text-neutral-600 transition hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="sr-only">Sign out</span>
             </button>
           </div>
         </div>
