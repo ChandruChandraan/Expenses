@@ -9,6 +9,12 @@ import {
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
+import {
+  ensureProfile,
+  updateProfile as updateProfileRow,
+  type Profile,
+  type ProfileUpdate,
+} from '../lib/profile'
 
 type AuthState =
   | { status: 'loading' }
@@ -17,15 +23,19 @@ type AuthState =
 
 type AuthContextValue = {
   state: AuthState
+  profile: Profile | null
   signUp: (email: string, password: string) => Promise<{ error: string | null }>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
+  refreshProfile: () => Promise<void>
+  updateProfile: (patch: ProfileUpdate) => Promise<{ error: string | null }>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ status: 'loading' })
+  const [profile, setProfile] = useState<Profile | null>(null)
 
   useEffect(() => {
     let active = true
@@ -49,6 +59,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // Load profile whenever the user changes.
+  const userId = state.status === 'signed-in' ? state.user.id : null
+  useEffect(() => {
+    if (!userId) {
+      setProfile(null)
+      return
+    }
+    let cancelled = false
+    void ensureProfile(userId).then((p) => {
+      if (!cancelled) setProfile(p)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [userId])
+
   const signUp = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({ email, password })
     return { error: error?.message ?? null }
@@ -63,9 +89,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
   }, [])
 
+  const refreshProfile = useCallback(async () => {
+    if (!userId) return
+    const p = await ensureProfile(userId)
+    setProfile(p)
+  }, [userId])
+
+  const updateProfile = useCallback(
+    async (patch: ProfileUpdate) => {
+      if (!userId) return { error: 'Not signed in.' }
+      const updated = await updateProfileRow(userId, patch)
+      if (!updated) return { error: 'Could not update profile.' }
+      setProfile(updated)
+      return { error: null }
+    },
+    [userId],
+  )
+
   const value = useMemo<AuthContextValue>(
-    () => ({ state, signUp, signIn, signOut }),
-    [state, signUp, signIn, signOut],
+    () => ({ state, profile, signUp, signIn, signOut, refreshProfile, updateProfile }),
+    [state, profile, signUp, signIn, signOut, refreshProfile, updateProfile],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

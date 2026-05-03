@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { UserPlus } from 'lucide-react'
 import { useData } from '../context/DataContext'
-import { formatINR, todayISO } from '../lib/format'
+import { useMoneyFmt, todayISO } from '../lib/format'
 import type { Expense } from '../lib/types'
 
 type Props = {
@@ -13,6 +13,7 @@ type Props = {
 export function ExpenseForm({ initial, onSubmitted, onCancel }: Props) {
   const { members, categories, addExpense, updateExpense, addMember } =
     useData()
+  const fmt = useMoneyFmt()
   const isEdit = Boolean(initial)
 
   const [description, setDescription] = useState(initial?.description ?? '')
@@ -292,7 +293,7 @@ export function ExpenseForm({ initial, onSubmitted, onCancel }: Props) {
         )}
         {perShare !== null && (
           <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
-            Each pays <span className="font-medium">{formatINR(perShare)}</span>
+            Each pays <span className="font-medium">{fmt(perShare)}</span>
             {paidByName ? ` · ${paidByName} paid the full amount` : ''}
           </p>
         )}

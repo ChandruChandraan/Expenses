@@ -1,9 +1,52 @@
+import { useCallback } from 'react'
+import { useAuth } from '../context/AuthContext'
+
+const LOCALE_BY_CURRENCY: Record<string, string> = {
+  INR: 'en-IN',
+  USD: 'en-US',
+  EUR: 'en-IE',
+  GBP: 'en-GB',
+  AUD: 'en-AU',
+  CAD: 'en-CA',
+  SGD: 'en-SG',
+  AED: 'en-AE',
+  JPY: 'ja-JP',
+}
+
+export function formatMoney(value: number, currency = 'INR'): string {
+  const locale = LOCALE_BY_CURRENCY[currency] ?? 'en-IN'
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: currency === 'JPY' ? 0 : 2,
+    }).format(value)
+  } catch {
+    // Unknown currency code → fall back to INR rendering.
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 2,
+    }).format(value)
+  }
+}
+
+/**
+ * Legacy formatter kept so callers outside React component scope keep
+ * working. Always renders ₹ INR. Inside components prefer {@link useMoneyFmt}.
+ */
 export function formatINR(value: number): string {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 2,
-  }).format(value)
+  return formatMoney(value, 'INR')
+}
+
+/**
+ * Hook that returns a formatter bound to the signed-in user's
+ * `default_currency` (falls back to INR when no profile is loaded yet).
+ */
+export function useMoneyFmt(): (value: number) => string {
+  const { profile } = useAuth()
+  const currency = profile?.default_currency || 'INR'
+  return useCallback((value: number) => formatMoney(value, currency), [currency])
 }
 
 export function todayISO(): string {

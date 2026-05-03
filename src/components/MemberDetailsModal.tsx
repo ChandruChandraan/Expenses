@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Modal } from './Modal'
 import { StatusSelect } from './StatusSelect'
 import { useData } from '../context/DataContext'
-import { formatINR, prettyDate } from '../lib/format'
+import { useMoneyFmt, prettyDate } from '../lib/format'
 import { perShareFor } from '../lib/settlement'
 import type { Expense, Member } from '../lib/types'
 
@@ -21,6 +21,7 @@ type Row = {
 
 export function MemberDetailsModal({ member, onClose }: Props) {
   const { expenses, members, categories, togglePaid } = useData()
+  const fmt = useMoneyFmt()
 
   const { owes, owed } = useMemo(() => {
     const owesList: Row[] = []
@@ -90,17 +91,17 @@ export function MemberDetailsModal({ member, onClose }: Props) {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <SummaryTile
               label="Will pay"
-              value={formatINR(pendingOwes)}
+              value={fmt(pendingOwes)}
               tone="amber"
             />
             <SummaryTile
               label="Owed to them"
-              value={formatINR(pendingOwed)}
+              value={fmt(pendingOwed)}
               tone="emerald"
             />
             <SummaryTile
               label="Net"
-              value={`${net > 0 ? '+' : ''}${formatINR(net)}`}
+              value={`${net > 0 ? '+' : ''}${fmt(net)}`}
               tone={net > 0 ? 'emerald' : net < 0 ? 'rose' : 'neutral'}
             />
           </div>
@@ -111,6 +112,7 @@ export function MemberDetailsModal({ member, onClose }: Props) {
             rows={owes}
             rowSubtitle={(r) => `to ${r.counterpart}`}
             catById={catById}
+            fmt={fmt}
             onChange={(r, next) => {
               const nowPaid = next === 'paid'
               if (nowPaid !== r.paid) togglePaid(r.expense.id, member.id)
@@ -123,6 +125,7 @@ export function MemberDetailsModal({ member, onClose }: Props) {
             rows={owed}
             rowSubtitle={(r) => `from ${r.counterpart}`}
             catById={catById}
+            fmt={fmt}
             onChange={(r, next) => {
               const nowPaid = next === 'paid'
               if (nowPaid !== r.paid) togglePaid(r.expense.id, r.splitterId)
@@ -181,6 +184,7 @@ function Section({
   rows,
   rowSubtitle,
   catById,
+  fmt,
   onChange,
 }: {
   title: string
@@ -188,6 +192,7 @@ function Section({
   rows: Row[]
   rowSubtitle: (row: Row) => string
   catById: Map<string, { id: string; name: string; color: string }>
+  fmt: (value: number) => string
   onChange: (row: Row, next: 'paid' | 'pending') => void
 }) {
   const pendingCount = rows.filter((r) => !r.paid).length
@@ -248,7 +253,7 @@ function Section({
                         : ''
                     }`}
                   >
-                    {formatINR(r.share)}
+                    {fmt(r.share)}
                   </span>
                   <StatusSelect
                     value={r.paid ? 'paid' : 'pending'}

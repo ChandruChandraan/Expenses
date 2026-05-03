@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Scale, SlidersHorizontal, Trash2, UserPlus } from 'lucide-react'
 import { useData } from '../context/DataContext'
-import { formatINR, prettyDate, todayISO } from '../lib/format'
+import { useMoneyFmt, prettyDate, todayISO } from '../lib/format'
 import { isCustomSplit, perShareFor } from '../lib/settlement'
 
 type ShareDraft = {
@@ -18,6 +18,7 @@ export function CustomExpensesPage() {
     removeExpense,
     addMember,
   } = useData()
+  const fmt = useMoneyFmt()
 
   const [paidBy, setPaidBy] = useState(() => members[0]?.id ?? '')
   const [categoryId, setCategoryId] = useState(
@@ -336,7 +337,7 @@ export function CustomExpensesPage() {
               bill
             </span>
             <span className="text-base font-semibold tabular-nums">
-              {formatINR(totalAmount)}
+              {fmt(totalAmount)}
             </span>
           </div>
         </div>
@@ -418,7 +419,7 @@ export function CustomExpensesPage() {
                               {m?.name ?? 'Unknown'}
                             </span>
                             <span className="tabular-nums text-neutral-500 dark:text-neutral-400">
-                              {formatINR(share)}
+                              {fmt(share)}
                             </span>
                           </li>
                         )
@@ -427,7 +428,7 @@ export function CustomExpensesPage() {
                   </div>
                   <div className="flex-none text-right">
                     <div className="font-semibold tabular-nums">
-                      {formatINR(e.amount)}
+                      {fmt(e.amount)}
                     </div>
                     <button
                       type="button"

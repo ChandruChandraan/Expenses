@@ -12,7 +12,7 @@ import {
 } from 'recharts'
 import { ChevronRight, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import { useData } from '../context/DataContext'
-import { formatINR, startOfWeek } from '../lib/format'
+import { useMoneyFmt, startOfWeek } from '../lib/format'
 import { perShareFor } from '../lib/settlement'
 import { MemberDetailsModal } from '../components/MemberDetailsModal'
 import { SettlementDetailsModal } from '../components/SettlementDetailsModal'
@@ -36,6 +36,7 @@ const RANGE_DAYS: Record<RangeKey, number> = {
 
 export function DashboardPage() {
   const { expenses, categories, members } = useData()
+  const fmt = useMoneyFmt()
   const [detailMember, setDetailMember] = useState<Member | null>(null)
   const [settleFilter, setSettleFilter] = useState<
     'pending' | 'settled' | null
@@ -193,20 +194,20 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard
           label="Overall total"
-          value={formatINR(stats.total)}
+          value={fmt(stats.total)}
           sub={`${expenses.length} ${expenses.length === 1 ? 'expense' : 'expenses'}`}
           accent="indigo"
           icon={<Wallet className="h-4 w-4" />}
         />
         <SummaryCard
           label="This week"
-          value={formatINR(stats.week)}
+          value={fmt(stats.week)}
           sub={`Since ${stats.weekStartLabel}`}
           accent="sky"
         />
         <SummaryCard
           label="This month"
-          value={formatINR(stats.thisMonth)}
+          value={fmt(stats.thisMonth)}
           sub={
             stats.mom == null
               ? 'No data last month'
@@ -218,7 +219,7 @@ export function DashboardPage() {
         <SummaryCard
           label="Top category"
           value={topCategoryName}
-          sub={stats.topCat ? formatINR(stats.topCat[1]) : '—'}
+          sub={stats.topCat ? fmt(stats.topCat[1]) : '—'}
           accent="amber"
         />
       </div>
@@ -226,7 +227,7 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <SummaryCard
           label="Pending to collect"
-          value={formatINR(settlement.totalPending)}
+          value={fmt(settlement.totalPending)}
           sub={
             settlement.pendingCount === 0
               ? 'Everyone is settled up'
@@ -237,7 +238,7 @@ export function DashboardPage() {
         />
         <SummaryCard
           label="Already settled"
-          value={formatINR(settlement.totalSettled)}
+          value={fmt(settlement.totalSettled)}
           sub={`${expenses.length} ${expenses.length === 1 ? 'expense' : 'expenses'} tracked · tap for details`}
           accent="emerald"
           onClick={() => setSettleFilter('settled')}
@@ -252,7 +253,7 @@ export function DashboardPage() {
             </h2>
             <div className="flex items-center gap-2">
               <span className="text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
-                {formatINR(stats.rangeTotal)} in range
+                {fmt(stats.rangeTotal)} in range
               </span>
               <select
                 value={rangeKey}
@@ -282,11 +283,11 @@ export function DashboardPage() {
                   stroke="currentColor"
                   strokeOpacity={0.2}
                   width={50}
-                  tickFormatter={(v) => formatINR(v).replace(/\.00$/, '')}
+                  tickFormatter={(v) => fmt(v).replace(/\.00$/, '')}
                 />
                 <Tooltip
                   contentStyle={{ fontSize: 12, borderRadius: 8 }}
-                  formatter={(v: number) => formatINR(v)}
+                  formatter={(v: number) => fmt(v)}
                 />
                 <Bar
                   dataKey="amount"
@@ -323,7 +324,7 @@ export function DashboardPage() {
                   </Pie>
                   <Tooltip
                     contentStyle={{ fontSize: 12, borderRadius: 8 }}
-                    formatter={(v: number) => formatINR(v)}
+                    formatter={(v: number) => fmt(v)}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -364,10 +365,10 @@ export function DashboardPage() {
                     </span>
                   </td>
                   <td className="py-2 pr-4 text-right tabular-nums">
-                    {formatINR(s.paid)}
+                    {fmt(s.paid)}
                   </td>
                   <td className="py-2 pr-4 text-right tabular-nums">
-                    {formatINR(s.share)}
+                    {fmt(s.share)}
                   </td>
                   <td
                     className={`py-2 pr-4 text-right tabular-nums ${
@@ -376,7 +377,7 @@ export function DashboardPage() {
                         : 'text-neutral-400 dark:text-neutral-500'
                     }`}
                   >
-                    {formatINR(s.pending)}
+                    {fmt(s.pending)}
                   </td>
                   <td
                     className={`py-2 text-right font-semibold tabular-nums ${
@@ -388,7 +389,7 @@ export function DashboardPage() {
                     }`}
                   >
                     {s.net > 0 ? '+' : ''}
-                    {formatINR(s.net)}
+                    {fmt(s.net)}
                   </td>
                 </tr>
               ))}

@@ -1,7 +1,7 @@
 import { Modal } from './Modal'
 import { StatusSelect } from './StatusSelect'
 import { useData } from '../context/DataContext'
-import { formatINR, prettyDate } from '../lib/format'
+import { useMoneyFmt, prettyDate } from '../lib/format'
 import { isCustomSplit, perShareFor } from '../lib/settlement'
 import type { Expense } from '../lib/types'
 
@@ -13,6 +13,7 @@ type Props = {
 export function SettleModal({ expense, onClose }: Props) {
   const { members, categories, togglePaid, markAllPaid, markAllPending } =
     useData()
+  const fmt = useMoneyFmt()
 
   const payer = expense
     ? members.find((m) => m.id === expense.paidBy)?.name ?? 'Unknown'
@@ -52,7 +53,7 @@ export function SettleModal({ expense, onClose }: Props) {
                 {category?.name ?? 'Uncategorized'} · paid by {payer}
               </div>
               <div className="text-sm font-semibold tabular-nums">
-                {formatINR(expense.amount)}
+                {fmt(expense.amount)}
               </div>
             </div>
             <div className="mt-2 flex items-center justify-between text-sm">
@@ -62,7 +63,7 @@ export function SettleModal({ expense, onClose }: Props) {
                   : 'Each share:'}{' '}
                 {!custom && (
                   <span className="font-semibold tabular-nums">
-                    {formatINR(perShareFor(expense, expense.splitAmong[0]))}
+                    {fmt(perShareFor(expense, expense.splitAmong[0]))}
                   </span>
                 )}
               </span>
@@ -76,7 +77,7 @@ export function SettleModal({ expense, onClose }: Props) {
                 {paidCount} of {totalCount} paid ·{' '}
                 {allSettled
                   ? 'fully settled'
-                  : `${formatINR(pendingAmount)} pending`}
+                  : `${fmt(pendingAmount)} pending`}
               </span>
             </div>
           </div>
@@ -102,7 +103,7 @@ export function SettleModal({ expense, onClose }: Props) {
                       )}
                     </div>
                     <div className="text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
-                      Owes {formatINR(share)}
+                      Owes {fmt(share)}
                     </div>
                   </div>
                   <StatusSelect

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Check, ChevronRight, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useData } from '../context/DataContext'
-import { formatINR } from '../lib/format'
+import { useMoneyFmt } from '../lib/format'
 import { perShareFor } from '../lib/settlement'
 import { Modal } from '../components/Modal'
 import { MemberDetailsModal } from '../components/MemberDetailsModal'
@@ -9,6 +9,7 @@ import type { Member } from '../lib/types'
 
 export function MembersPage() {
   const { members, expenses, addMember, renameMember, removeMember } = useData()
+  const fmt = useMoneyFmt()
   const [open, setOpen] = useState(false)
   const [newName, setNewName] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -171,13 +172,13 @@ export function MembersPage() {
                     <div className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                       Paid
                     </div>
-                    <div>{formatINR(s.paid)}</div>
+                    <div>{fmt(s.paid)}</div>
                   </div>
                   <div>
                     <div className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                       Share
                     </div>
-                    <div>{formatINR(s.share)}</div>
+                    <div>{fmt(s.share)}</div>
                   </div>
                   <div>
                     <div className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
@@ -190,7 +191,7 @@ export function MembersPage() {
                           : 'text-neutral-400 dark:text-neutral-500'
                       }
                     >
-                      {formatINR(s.pending)}
+                      {fmt(s.pending)}
                     </div>
                   </div>
                   <div>
@@ -207,7 +208,7 @@ export function MembersPage() {
                       }`}
                     >
                       {s.net > 0 ? '+' : ''}
-                      {formatINR(s.net)}
+                      {fmt(s.net)}
                     </div>
                   </div>
                 </div>

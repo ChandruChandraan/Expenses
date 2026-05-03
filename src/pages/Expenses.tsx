@@ -11,7 +11,7 @@ import {
   Users,
 } from 'lucide-react'
 import { useData } from '../context/DataContext'
-import { formatINR, prettyDate } from '../lib/format'
+import { useMoneyFmt, prettyDate } from '../lib/format'
 import { isCustomSplit, pendingAmountFor } from '../lib/settlement'
 import { Modal } from '../components/Modal'
 import { ExpenseForm } from '../components/ExpenseForm'
@@ -23,6 +23,7 @@ import type { Expense } from '../lib/types'
 export function ExpensesPage() {
   const { expenses, members, categories, removeExpense, clearAllExpenses } =
     useData()
+  const fmt = useMoneyFmt()
   const [search, setSearch] = useState('')
   const [categoryId, setCategoryId] = useState<string>('All')
   const [memberId, setMemberId] = useState<string>('All')
@@ -149,7 +150,7 @@ export function ExpensesPage() {
             Showing {filtered.length} of {expenses.length}
           </div>
           <div className="text-sm tabular-nums text-neutral-500 dark:text-neutral-400">
-            {formatINR(filteredTotal)} total
+            {fmt(filteredTotal)} total
           </div>
         </div>
         {filtered.length === 0 ? (
@@ -210,7 +211,7 @@ export function ExpensesPage() {
                         ) : (
                           <>
                             <CircleDollarSign className="h-3 w-3" />
-                            {formatINR(pendingAmount)} pending
+                            {fmt(pendingAmount)} pending
                           </>
                         )}
                       </span>
@@ -220,13 +221,13 @@ export function ExpensesPage() {
                     </div>
                     <div className="truncate text-xs text-neutral-500 dark:text-neutral-400">
                       Paid by {payer} · split among {splitters} (
-                      {custom ? 'custom split' : `${formatINR(per)} each`}) ·{' '}
+                      {custom ? 'custom split' : `${fmt(per)} each`}) ·{' '}
                       {paidCount}/{totalCount} paid
                     </div>
                   </div>
                   <div className="flex-none text-right">
                     <div className="font-semibold tabular-nums">
-                      {formatINR(e.amount)}
+                      {fmt(e.amount)}
                     </div>
                     <div className="mt-1 flex items-center justify-end gap-2 text-neutral-400">
                       <button

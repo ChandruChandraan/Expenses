@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { Modal } from './Modal'
 import { useData } from '../context/DataContext'
-import { formatINR, todayISO } from '../lib/format'
+import { useMoneyFmt, todayISO } from '../lib/format'
 
 type Draft = {
   key: string
@@ -35,6 +35,7 @@ const makeDraft = (
 
 export function BulkAddModal({ open, onClose }: Props) {
   const { members, categories, addExpense } = useData()
+  const fmt = useMoneyFmt()
   const defaultCat = categories[0]?.id ?? ''
   const defaultPayer = members[0]?.id ?? ''
   const defaultSplit = useMemo(() => members.map((m) => m.id), [members])
@@ -234,7 +235,7 @@ export function BulkAddModal({ open, onClose }: Props) {
                   })}
                   {perShare !== null && (
                     <span className="ml-auto text-xs text-neutral-500 dark:text-neutral-400">
-                      Each: {formatINR(perShare)}
+                      Each: {fmt(perShare)}
                     </span>
                   )}
                 </div>
@@ -262,7 +263,7 @@ export function BulkAddModal({ open, onClose }: Props) {
             {validRows.length} of {rows.length}{' '}
             {rows.length === 1 ? 'row' : 'rows'} ready ·{' '}
             <span className="font-semibold tabular-nums">
-              {formatINR(totalValid)}
+              {fmt(totalValid)}
             </span>{' '}
             total
           </div>

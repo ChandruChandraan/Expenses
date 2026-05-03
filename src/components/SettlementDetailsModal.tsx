@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Modal } from './Modal'
 import { StatusSelect } from './StatusSelect'
 import { useData } from '../context/DataContext'
-import { formatINR, prettyDate } from '../lib/format'
+import { useMoneyFmt, prettyDate } from '../lib/format'
 import { isCustomSplit, perShareFor } from '../lib/settlement'
 
 type Filter = 'pending' | 'settled'
@@ -15,6 +15,7 @@ type Props = {
 
 export function SettlementDetailsModal({ open, filter, onClose }: Props) {
   const { expenses, members, categories, togglePaid } = useData()
+  const fmt = useMoneyFmt()
 
   const rows = useMemo(() => {
     const memberName = (id: string) =>
@@ -62,8 +63,8 @@ export function SettlementDetailsModal({ open, filter, onClose }: Props) {
 
   const title =
     filter === 'pending'
-      ? `Pending settlements · ${formatINR(total)}`
-      : `Already settled · ${formatINR(total)}`
+      ? `Pending settlements · ${fmt(total)}`
+      : `Already settled · ${fmt(total)}`
 
   return (
     <Modal
@@ -106,7 +107,7 @@ export function SettlementDetailsModal({ open, filter, onClose }: Props) {
                       )}
                     </span>
                     <span className="text-sm font-semibold tabular-nums">
-                      {formatINR(r.expense.amount)}
+                      {fmt(r.expense.amount)}
                     </span>
                   </div>
                   <div className="truncate text-xs text-neutral-500 dark:text-neutral-400">
@@ -114,7 +115,7 @@ export function SettlementDetailsModal({ open, filter, onClose }: Props) {
                     {prettyDate(r.expense.date)} · paid by {r.payer} ·{' '}
                     {r.custom
                       ? 'custom split'
-                      : `${formatINR(r.splitters[0]?.share ?? 0)} each`}
+                      : `${fmt(r.splitters[0]?.share ?? 0)} each`}
                     {' · '}
                     <span
                       className={
@@ -138,7 +139,7 @@ export function SettlementDetailsModal({ open, filter, onClose }: Props) {
                     >
                       <span className="font-medium">{s.name}</span>
                       <span className="tabular-nums text-neutral-500 dark:text-neutral-400">
-                        {formatINR(s.share)}
+                        {fmt(s.share)}
                       </span>
                       <StatusSelect
                         value={s.paid ? 'paid' : 'pending'}
