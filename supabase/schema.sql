@@ -2,19 +2,29 @@
 -- Paste this into the SQL editor at:
 -- https://supabase.com/dashboard/project/qbjgwpypylntcqpwxbqv/sql/new
 -- and click Run. Safe to run multiple times.
+--
+-- This drops and recreates the three tables — all existing rows are wiped
+-- by design (the user picked "wipe — start fresh in Supabase").
+
+-- ---------- clean slate ----------
+drop trigger if exists on_auth_user_created on auth.users;
+drop function if exists public.seed_default_data_for_new_user();
+drop table if exists public.expenses   cascade;
+drop table if exists public.categories cascade;
+drop table if exists public.members    cascade;
 
 -- ---------- members ----------
-create table if not exists public.members (
+create table public.members (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
   name text not null,
   created_at timestamptz not null default now()
 );
 
-create index if not exists members_user_id_idx on public.members (user_id);
+create index members_user_id_idx on public.members (user_id);
 
 -- ---------- categories ----------
-create table if not exists public.categories (
+create table public.categories (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
   name text not null,
@@ -22,10 +32,10 @@ create table if not exists public.categories (
   created_at timestamptz not null default now()
 );
 
-create index if not exists categories_user_id_idx on public.categories (user_id);
+create index categories_user_id_idx on public.categories (user_id);
 
 -- ---------- expenses ----------
-create table if not exists public.expenses (
+create table public.expenses (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
   amount numeric(14, 2) not null,
@@ -39,8 +49,8 @@ create table if not exists public.expenses (
   created_at timestamptz not null default now()
 );
 
-create index if not exists expenses_user_id_idx on public.expenses (user_id);
-create index if not exists expenses_date_idx on public.expenses (date);
+create index expenses_user_id_idx on public.expenses (user_id);
+create index expenses_date_idx on public.expenses (date);
 
 -- ---------- Row-Level Security ----------
 alter table public.members    enable row level security;
