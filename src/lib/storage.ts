@@ -64,14 +64,9 @@ export function loadTheme(): ThemeMode {
   const stored =
     localStorage.getItem(KEYS.theme) ?? localStorage.getItem(KEYS.legacyV3Theme)
   if (stored === 'dark' || stored === 'light') return stored
-  // Default to dark on first load. Respect `prefers-color-scheme: light`
-  // only when the OS explicitly prefers light.
-  if (
-    typeof window !== 'undefined' &&
-    window.matchMedia?.('(prefers-color-scheme: light)').matches
-  ) {
-    return 'light'
-  }
+  // Default to dark on first load. The user explicitly asked for dark to be
+  // the out-of-the-box experience, so we ignore the OS color-scheme hint
+  // here — the toggle in the header still lets anyone switch to light.
   return 'dark'
 }
 
